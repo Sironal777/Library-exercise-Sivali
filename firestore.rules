@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper to validate User Profile schema
+    function isValidUser(data) {
+      return data.id is string 
+          && data.id.size() <= 128
+          && data.username is string
+          && data.username.size() >= 2
+          && data.username.size() <= 15
+          && data.totalPoints is number
+          && data.ddcScore is number
+          && data.catalogingScore is number
+          && data.filingScore is number
+          && data.subjectScore is number;
+    }
+
+    match /users/{userId} {
+      // Allow read/list so players can search usernames and see the public leaderboard
+      allow read, list: if true;
+
+      // Allow profile creation with initial zero scores
+      allow create: if isValidUser(request.resource.data)
+                    && request.resource.data.id == userId
+                    && request.resource.data.totalPoints == 0
+                    && request.resource.data.ddcScore == 0
+                    && request.resource.data.catalogingScore == 0
+                    && request.resource.data.filingScore == 0
+                    && request.resource.data.subjectScore == 0;
+
+      // Allow profile score updates; ensure username is immutable
+      allow update: if isValidUser(request.resource.data)
+                    && request.resource.data.id == userId
+                    && request.resource.data.username == resource.data.username;
+
+      // Deny delete
+      allow delete: if false;
+    }
+  }
+}

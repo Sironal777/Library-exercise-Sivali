@@ -1,0 +1,37 @@
+{
+  "collections": {
+    "users": {
+      "description": "Store user profiles, game levels, and high scores.",
+      "fields": {
+        "username": {
+          "type": "string",
+          "description": "The unique name chosen by the user."
+        },
+        "totalPoints": {
+          "type": "number",
+          "description": "Sum of all game scores."
+        },
+        "ddcScore": {
+          "type": "number",
+          "description": "High score for Dewey Decimal Classification game."
+        },
+        "catalogingScore": {
+          "type": "number",
+          "description": "High score for Cataloging Details game."
+        },
+        "filingScore": {
+          "type": "number",
+          "description": "High score for Alphabetical Filing game."
+        },
+        "subjectScore": {
+          "type": "number",
+          "description": "High score for Subject Classification game."
+        },
+        "lastActive": {
+          "type": "timestamp",
+          "description": "Last time the user played any game."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Sīvali-Library-Exercises",
+  "description": "စာကြည့်တိုက်ဆိုင်ရာ ကတ်တလောက်နှင့် အမျိုးအစားခွဲခြားခြင်းဆိုင်ရာ လေ့ကျင့်ခန်းများ၊ ကစားနည်းများနှင့် အမှတ်စာရင်းဘုတ် (Library Cataloging and Classification games & exercises with high-score leaderboards).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
