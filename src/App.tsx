@@ -13,7 +13,8 @@ import {
   Book,
   AlignLeft,
   Tags,
-  Search
+  Search,
+  HelpCircle
 } from "lucide-react";
 import { 
   getUserProfile, 
@@ -28,6 +29,7 @@ import DdcGame from "./components/DdcGame";
 import CatalogingGame from "./components/CatalogingGame";
 import FilingGame from "./components/FilingGame";
 import SubjectGame from "./components/SubjectGame";
+import GeneralKnowledgeGame from "./components/GeneralKnowledgeGame";
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>("login");
@@ -362,6 +364,10 @@ export default function App() {
                           <div className="text-slate-400 font-sans">Subject Headings</div>
                           <div className="font-bold text-white mt-1">{user.subjectScore} pts</div>
                         </div>
+                        <div className="bg-white/[0.02] p-2.5 rounded-xl border border-white/5 col-span-2 text-center">
+                          <div className="text-pink-300 font-bold">General Knowledge</div>
+                          <div className="font-bold text-white mt-1">{user.gkScore || 0} pts</div>
+                        </div>
                       </div>
                     </div>
 
@@ -516,6 +522,29 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* General Knowledge Quiz Game */}
+                      <div className="glass-card p-6 rounded-3xl border border-white/15 flex flex-col justify-between hover:border-pink-500/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all group">
+                        <div>
+                          <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center mb-4 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.2)]">
+                            <HelpCircle className="w-5 h-5" />
+                          </div>
+                          <h4 className="text-base font-black text-white">General Knowledge (အထွေထွေဗဟုသုတ)</h4>
+                          <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                            စာကြည့်တိုက်နှင့် သတင်းအချက်အလက်သိပ္ပံပညာရပ်ဆိုင်ရာ အခြေခံသဘောတရားများ၊ နိုင်ငံတကာစံနှုန်းများနှင့် အထွေထွေဗဟုသုတမေးခွန်းများ ဖြေဆိုခြင်း လေ့ကျင့်ခန်း
+                          </p>
+                        </div>
+                        <div className="mt-6 flex justify-between items-center">
+                          <span className="text-[10px] text-slate-400 font-mono">High Score: {user.gkScore || 0} pts</span>
+                          <button 
+                            onClick={() => setActiveScreen("game_gk")}
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white flex items-center gap-1 group-hover:bg-pink-500/20 group-hover:border-pink-500 group-hover:text-pink-300 transition-all cursor-pointer"
+                          >
+                            <span>ကစားမည်</span>
+                            <Play className="w-3 h-3 fill-current" />
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
@@ -558,6 +587,17 @@ export default function App() {
 
               {activeScreen === "game_subject" && user && (
                 <SubjectGame 
+                  user={user} 
+                  onUpdateUser={setUser} 
+                  onBack={() => {
+                    setActiveScreen("dashboard");
+                    loadLeaderboard();
+                  }} 
+                />
+              )}
+
+              {activeScreen === "game_gk" && user && (
+                <GeneralKnowledgeGame 
                   user={user} 
                   onUpdateUser={setUser} 
                   onBack={() => {

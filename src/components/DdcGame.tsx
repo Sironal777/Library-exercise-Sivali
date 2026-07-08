@@ -30,6 +30,29 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
   const [attempts, setAttempts] = useState<number>(0);
   const [gameFinished, setGameFinished] = useState<boolean>(false);
   
+  // Completed lists from localStorage
+  const [completedMatchIds, setCompletedMatchIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`sivali_completed_ddc_m_${user.id}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [completedSortIds, setCompletedSortIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`sivali_completed_ddc_s_${user.id}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Track session completions
+  const [sessionCompletedMatches, setSessionCompletedMatches] = useState<string[]>([]);
+  const [sessionCompletedSort, setSessionCompletedSort] = useState<string | null>(null);
+
   // Level 1 States
   const [currentMatchIdx, setCurrentMatchIdx] = useState<number>(0);
   const [selectedDdc, setSelectedDdc] = useState<string | null>(null);
@@ -107,37 +130,60 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
   ];
 
   // Level 2 Sorting Question Sets
-  const sortPool: SortBook[][] = [
-    [
-      { id: "s1_1", title: "Intro to Algebra", callNumber: "512" },
-      { id: "s1_2", title: "Algebra Applications", callNumber: "512.02" },
-      { id: "s1_3", title: "Linear Systems", callNumber: "512.3" },
-      { id: "s1_4", title: "Matrix Theory", callNumber: "512.32" },
-      { id: "s1_5", title: "Modern Algebra", callNumber: "512.4" }
-    ],
-    [
-      { id: "s2_1", title: "Buddhism History", callNumber: "294" },
-      { id: "s2_2", title: "Theravada Principles", callNumber: "294.3" },
-      { id: "s2_3", title: "Abhidhamma Studies", callNumber: "294.32" },
-      { id: "s2_4", title: "Visuddhimagga Guide", callNumber: "294.324" },
-      { id: "s2_5", title: "Zen Teachings", callNumber: "294.34" }
-    ],
-    [
-      { id: "s3_1", title: "Poetry Basics", callNumber: "808" },
-      { id: "s3_2", title: "Myanmar Lyrics", callNumber: "808.1" },
-      { id: "s3_3", title: "Creative Writing", callNumber: "808.109" },
-      { id: "s3_4", title: "Short Stories", callNumber: "808.3" },
-      { id: "s3_5", title: "Novel Structures", callNumber: "808.31" }
-    ]
+  const sortPool: { id: string; books: SortBook[] }[] = [
+    {
+      id: "set_1",
+      books: [
+        { id: "s1_1", title: "Intro to Algebra", callNumber: "512" },
+        { id: "s1_2", title: "Algebra Applications", callNumber: "512.02" },
+        { id: "s1_3", title: "Linear Systems", callNumber: "512.3" },
+        { id: "s1_4", title: "Matrix Theory", callNumber: "512.32" },
+        { id: "s1_5", title: "Modern Algebra", callNumber: "512.4" }
+      ]
+    },
+    {
+      id: "set_2",
+      books: [
+        { id: "s2_1", title: "Buddhism History", callNumber: "294" },
+        { id: "s2_2", title: "Theravada Principles", callNumber: "294.3" },
+        { id: "s2_3", title: "Abhidhamma Studies", callNumber: "294.32" },
+        { id: "s2_4", title: "Visuddhimagga Guide", callNumber: "294.324" },
+        { id: "s2_5", title: "Zen Teachings", callNumber: "294.34" }
+      ]
+    },
+    {
+      id: "set_3",
+      books: [
+        { id: "s3_1", title: "Poetry Basics", callNumber: "808" },
+        { id: "s3_2", title: "Myanmar Lyrics", callNumber: "808.1" },
+        { id: "s3_3", title: "Creative Writing", callNumber: "808.109" },
+        { id: "s3_4", title: "Short Stories", callNumber: "808.3" },
+        { id: "s3_5", title: "Novel Structures", callNumber: "808.31" }
+      ]
+    }
   ];
 
-  // Initialize sorting game
+  // Filter Match Questions
+  const [activeMatchQuestions, setActiveMatchQuestions] = useState<MatchQuestion[]>([]);
+  const [activeSortSet, setActiveSortSet] = useState<{ id: string; books: SortBook[] } | null>(null);
+
+  useEffect(() => {
+    const uncompleted = matchQuestions.filter(q => !completedMatchIds.includes(q.id));
+    const pool = uncompleted.length > 0 ? uncompleted : matchQuestions;
+    const selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+    setActiveMatchQuestions(selected);
+  }, []);
+
+  // Initialize sorting game for Level 2
   useEffect(() => {
     if (level === 2) {
-      // Pick a random set from the pool
-      const randomSet = sortPool[Math.floor(Math.random() * sortPool.length)];
-      // Shuffle them
-      const shuffled = [...randomSet].sort(() => Math.random() - 0.5);
+      const uncompleted = sortPool.filter(s => !completedSortIds.includes(s.id));
+      const pool = uncompleted.length > 0 ? uncompleted : sortPool;
+      const selectedSet = pool[Math.floor(Math.random() * pool.length)];
+      setActiveSortSet(selectedSet);
+
+      // Shuffle books
+      const shuffled = [...selectedSet.books].sort(() => Math.random() - 0.5);
       setSortBooks(shuffled);
       setUserSorted([]);
       setSortChecked(false);
@@ -153,13 +199,14 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
 
   // Check Level 1 Match
   const checkMatchAnswer = () => {
-    if (!selectedDdc) return;
-    const currentQ = matchQuestions[currentMatchIdx];
+    if (!selectedDdc || activeMatchQuestions.length === 0) return;
+    const currentQ = activeMatchQuestions[currentMatchIdx];
     const correct = selectedDdc === currentQ.correctDdc;
     setIsCorrect(correct);
     setMatchChecked(true);
     if (correct) {
       setScore(prev => prev + 20); // 20 points per match
+      setSessionCompletedMatches(prev => [...prev, currentQ.id]);
     }
   };
 
@@ -167,7 +214,7 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
   const nextMatchQuestion = () => {
     setSelectedDdc(null);
     setMatchChecked(false);
-    if (currentMatchIdx < matchQuestions.length - 1) {
+    if (currentMatchIdx < activeMatchQuestions.length - 1) {
       setCurrentMatchIdx(prev => prev + 1);
     } else {
       // Finished Level 1, go to Level 2
@@ -212,11 +259,30 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
     
     if (isSortedCorrectly) {
       setScore(prev => prev + 50); // 50 points for sorting correctly
+      if (activeSortSet) {
+        setSessionCompletedSort(activeSortSet.id);
+      }
     }
   };
 
   const handleFinishGame = async () => {
     setGameFinished(true);
+
+    const updatedMatches = [...completedMatchIds, ...sessionCompletedMatches];
+    const updatedSorts = (sortSuccess && activeSortSet) ? [...completedSortIds, activeSortSet.id] : completedSortIds;
+
+    try {
+      localStorage.setItem(`sivali_completed_ddc_m_${user.id}`, JSON.stringify(updatedMatches));
+      if (sortSuccess && activeSortSet) {
+        localStorage.setItem(`sivali_completed_ddc_s_${user.id}`, JSON.stringify(updatedSorts));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    setCompletedMatchIds(updatedMatches);
+    setCompletedSortIds(updatedSorts);
+
     // Persist High Score inside Firestore
     try {
       await updateUserScore(user.id, "ddc", score);
@@ -224,6 +290,65 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
       console.error(e);
     }
   };
+
+  const resetGame = () => {
+    setLevel(1);
+    setScore(0);
+    setAttempts(0);
+    setCurrentMatchIdx(0);
+    setSelectedDdc(null);
+    setMatchChecked(false);
+    setIsCorrect(false);
+    setSortBooks([]);
+    setUserSorted([]);
+    setSortChecked(false);
+    setSortSuccess(false);
+    setGameFinished(false);
+    setSessionCompletedMatches([]);
+    setSessionCompletedSort(null);
+
+    // Filter Match Questions
+    const uncompleted = matchQuestions.filter(q => !completedMatchIds.includes(q.id));
+    const pool = uncompleted.length > 0 ? uncompleted : matchQuestions;
+    const selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+    setActiveMatchQuestions(selected);
+  };
+
+  const clearCompletionHistory = () => {
+    try {
+      localStorage.removeItem(`sivali_completed_ddc_m_${user.id}`);
+      localStorage.removeItem(`sivali_completed_ddc_s_${user.id}`);
+    } catch (e) {
+      console.error(e);
+    }
+    setCompletedMatchIds([]);
+    setCompletedSortIds([]);
+    setSessionCompletedMatches([]);
+    setSessionCompletedSort(null);
+    setLevel(1);
+    setScore(0);
+    setAttempts(0);
+    setCurrentMatchIdx(0);
+    setSelectedDdc(null);
+    setMatchChecked(false);
+    setIsCorrect(false);
+    setSortBooks([]);
+    setUserSorted([]);
+    setSortChecked(false);
+    setSortSuccess(false);
+    setGameFinished(false);
+
+    const selected = [...matchQuestions].sort(() => Math.random() - 0.5).slice(0, 3);
+    setActiveMatchQuestions(selected);
+  };
+
+  if (activeMatchQuestions.length === 0) {
+    return (
+      <div className="w-full max-w-4xl mx-auto p-6 text-center text-white" id="ddc-loading">
+        လေ့ကျင့်ခန်းများ ပြင်ဆင်နေပါသည်...
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 md:p-6" id="ddc-game-root">
@@ -269,12 +394,12 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
 
                 <div className="mb-6">
                   <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider block mb-1">
-                    မေးခွန်း {currentMatchIdx + 1} / {matchQuestions.length}
+                    မေးခွန်း {currentMatchIdx + 1} / {activeMatchQuestions.length}
                   </span>
                   <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-cyan-400 transition-all duration-300"
-                      style={{ width: `${((currentMatchIdx + 1) / matchQuestions.length) * 100}%` }}
+                      style={{ width: `${((currentMatchIdx + 1) / activeMatchQuestions.length) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -282,19 +407,19 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
                 <div className="mb-8">
                   <h3 className="text-xs text-slate-400 mb-1">စာအုပ်အမည် -</h3>
                   <div className="text-2xl font-bold text-white tracking-wide leading-relaxed bg-white/5 p-4 rounded-2xl border border-white/10">
-                    {matchQuestions[currentMatchIdx].title}
+                    {activeMatchQuestions[currentMatchIdx].title}
                   </div>
                   <div className="mt-3 flex items-center gap-2 text-sm text-cyan-300">
                     <HelpCircle className="w-4 h-4 text-cyan-400" />
-                    <span>စာအုပ်အကြောင်းအရာ - <b>{matchQuestions[currentMatchIdx].subject}</b></span>
+                    <span>စာအုပ်အကြောင်းအရာ - <b>{activeMatchQuestions[currentMatchIdx].subject}</b></span>
                   </div>
                 </div>
 
                 {/* Grid of Options */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  {matchQuestions[currentMatchIdx].options.map((option) => {
+                  {activeMatchQuestions[currentMatchIdx].options.map((option) => {
                     const isSelected = selectedDdc === option.code;
-                    const isCorrectOption = option.code === matchQuestions[currentMatchIdx].correctDdc;
+                    const isCorrectOption = option.code === activeMatchQuestions[currentMatchIdx].correctDdc;
                     
                     let cardStyle = "glass-card text-left p-4 rounded-2xl transition-all cursor-pointer flex items-center justify-between border border-white/10 text-white hover:bg-white/10";
                     if (isSelected && !matchChecked) {
@@ -547,33 +672,31 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => {
-                  setLevel(1);
-                  setScore(0);
-                  setAttempts(0);
-                  setCurrentMatchIdx(0);
-                  setSelectedDdc(null);
-                  setMatchChecked(false);
-                  setIsCorrect(false);
-                  setSortBooks([]);
-                  setUserSorted([]);
-                  setSortChecked(false);
-                  setSortSuccess(false);
-                  setGameFinished(false);
-                }}
-                className="px-6 py-3 rounded-2xl font-semibold border border-white/20 hover:bg-white/10 text-white transition-all flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-5 h-5" />
-                <span>ပြန်လည်ကစားမည်</span>
-              </button>
-              <button
-                onClick={onBack}
-                className="px-8 py-3 rounded-2xl font-bold liquid-button"
-              >
-                ပင်မစာမျက်နှာသို့
-              </button>
+            <div className="flex flex-col gap-4 justify-center max-w-sm mx-auto">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={resetGame}
+                  className="px-6 py-3 rounded-2xl font-semibold border border-white/20 hover:bg-white/10 text-white transition-all flex items-center justify-center gap-2 grow"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  <span>ထပ်မံဆော့ကစားမည်</span>
+                </button>
+                <button
+                  onClick={onBack}
+                  className="px-8 py-3 rounded-2xl font-bold liquid-button grow"
+                >
+                  ပင်မစာမျက်နှာသို့
+                </button>
+              </div>
+
+              {(completedMatchIds.length > 0 || completedSortIds.length > 0) && (
+                <button
+                  onClick={clearCompletionHistory}
+                  className="text-xs text-red-300/60 hover:text-red-300 underline transition-all py-1"
+                >
+                  လေ့ကျင့်ခန်းမှတ်တမ်းကို ဖျက်ပြီး အစမှပြန်စမည် (DDC {completedMatchIds.length + completedSortIds.length} ခု ပြီးစီး)
+                </button>
+              )}
             </div>
           </motion.div>
         )}

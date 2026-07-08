@@ -24,33 +24,80 @@ export default function FilingGame({ user, onUpdateUser, onBack }: FilingGamePro
   const [attempts, setAttempts] = useState<number>(0);
   const [gameFinished, setGameFinished] = useState<boolean>(false);
 
+  // Completed lists from localStorage
+  const [completedFilingIds, setCompletedFilingIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`sivali_completed_filing_${user.id}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [sessionCompleted, setSessionCompleted] = useState<string[]>([]);
+  const [currentSetId, setCurrentSetId] = useState<string>("");
+
   // States for sorting
   const [shuffledBooks, setShuffledBooks] = useState<FileBook[]>([]);
   const [userSorted, setUserSorted] = useState<FileBook[]>([]);
   const [checked, setChecked] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
 
-  // Level 1: English (Library rules ignore initial "A", "An", "The")
-  const level1Pool: FileBook[] = [
-    { id: "e1", title: "The Great Gatsby", author: "F. Scott Fitzgerald", filedAs: "Great Gatsby, The", ruleExplanation: "Library rule: Ignore initial article 'The' when sorting." },
-    { id: "e2", title: "A Farewell to Arms", author: "Ernest Hemingway", filedAs: "Farewell to Arms, A", ruleExplanation: "Library rule: Ignore initial article 'A' when sorting." },
-    { id: "e3", title: "Animal Farm", author: "George Orwell", filedAs: "Animal Farm", ruleExplanation: "Starts with content word 'Animal'." },
-    { id: "e4", title: "The Hobbit", author: "J.R.R. Tolkien", filedAs: "Hobbit, The", ruleExplanation: "Library rule: Ignore initial article 'The' when sorting." },
-    { id: "e5", title: "An Inconvenient Truth", author: "Al Gore", filedAs: "Inconvenient Truth, An", ruleExplanation: "Library rule: Ignore initial article 'An' when sorting." }
+  // Level 1 english pools
+  const level1Pools = [
+    {
+      id: "l1_setA",
+      books: [
+        { id: "e1", title: "The Great Gatsby", author: "F. Scott Fitzgerald", filedAs: "Great Gatsby, The", ruleExplanation: "Library rule: Ignore initial article 'The' when sorting." },
+        { id: "e2", title: "A Farewell to Arms", author: "Ernest Hemingway", filedAs: "Farewell to Arms, A", ruleExplanation: "Library rule: Ignore initial article 'A' when sorting." },
+        { id: "e3", title: "Animal Farm", author: "George Orwell", filedAs: "Animal Farm", ruleExplanation: "Starts with content word 'Animal'." },
+        { id: "e4", title: "The Hobbit", author: "J.R.R. Tolkien", filedAs: "Hobbit, The", ruleExplanation: "Library rule: Ignore initial article 'The' when sorting." },
+        { id: "e5", title: "An Inconvenient Truth", author: "Al Gore", filedAs: "Inconvenient Truth, An", ruleExplanation: "Library rule: Ignore initial article 'An' when sorting." }
+      ]
+    },
+    {
+      id: "l1_setB",
+      books: [
+        { id: "e6", title: "A Tale of Two Cities", author: "Charles Dickens", filedAs: "Tale of Two Cities, A", ruleExplanation: "Library rule: Ignore initial article 'A' when sorting." },
+        { id: "e7", title: "The Old Man and the Sea", author: "Ernest Hemingway", filedAs: "Old Man and the Sea, The", ruleExplanation: "Library rule: Ignore initial article 'The' when sorting." },
+        { id: "e8", title: "An Enemy of the People", author: "Henrik Ibsen", filedAs: "Enemy of the People, An", ruleExplanation: "Library rule: Ignore initial article 'An' when sorting." },
+        { id: "e9", title: "Brave New World", author: "Aldous Huxley", filedAs: "Brave New World", ruleExplanation: "Starts with content word 'Brave'." },
+        { id: "e10", title: "The Catcher in the Rye", author: "J.D. Salinger", filedAs: "Catcher in the Rye, The", ruleExplanation: "Library rule: Ignore initial article 'The' when sorting." }
+      ]
+    }
   ];
 
-  // Level 2: Myanmar alphabet (က, ခ, ဂ...)
-  const level2Pool: FileBook[] = [
-    { id: "m1", title: "ကဗျာပေါင်းချုပ်", author: "ကဗျာမောင်", filedAs: "က" },
-    { id: "m2", title: "ခရီးသွားမှတ်စုများ", author: "ခိုင်ကြည်ဝင်း", filedAs: "ခ" },
-    { id: "m3", title: "ငြိမ်းချမ်းရေးစာတမ်း", author: "ငြိမ်းသူ", filedAs: "င" },
-    { id: "m4", title: "စုံထောက်ဦးစံရှား", author: "စံမြတ်ထွန်း", filedAs: "စ" },
-    { id: "m5", title: "ညဉ့်နက်သန်းခေါင်ယံ", author: "ညိုမြ", filedAs: "ည" }
+  // Level 2 Myanmar Pools
+  const level2Pools = [
+    {
+      id: "l2_setA",
+      books: [
+        { id: "m1", title: "ကဗျာပေါင်းချုပ်", author: "ကဗျာမောင်", filedAs: "က", ruleExplanation: "ဗျည်းအက္ခရာ 'က' ဖြင့် စတင်ပါသည်။" },
+        { id: "m2", title: "ခရီးသွားမှတ်စုများ", author: "ခိုင်ကြည်ဝင်း", filedAs: "ခ", ruleExplanation: "ဗျည်းအက္ခရာ 'ခ' ဖြင့် စတင်ပါသည်။" },
+        { id: "m3", title: "ငြိမ်းချမ်းရေးစာတမ်း", author: "ငြိမ်းသူ", filedAs: "င", ruleExplanation: "ဗျည်းအက္ခရာ 'င' ဖြင့် စတင်ပါသည်။" },
+        { id: "m4", title: "စုံထောက်ဦးစံရှား", author: "စံမြတ်ထွန်း", filedAs: "စ", ruleExplanation: "ဗျည်းအက္ခရာ 'စ' ဖြင့် စတင်ပါသည်။" },
+        { id: "m5", title: "ညဉ့်နက်သန်းခေါင်ယံ", author: "ညိုမြ", filedAs: "ည", ruleExplanation: "ဗျည်းအက္ခရာ 'ည' ဖြင့် စတင်ပါသည်။" }
+      ]
+    },
+    {
+      id: "l2_setB",
+      books: [
+        { id: "m6", title: "ဃမ္ပနီလုပ်ငန်းရှင်များ", author: "ဦးသန်းမောင်", filedAs: "ဃ", ruleExplanation: "ဗျည်းအက္ခရာ 'ဃ' ဖြင့် စတင်ပါသည်။" },
+        { id: "m7", title: "ဇာတာရှင်၏ ဘဝမှတ်တမ်း", author: "ဆရာကြီးဦးတင်", filedAs: "ဇ", ruleExplanation: "ဗျည်းအက္ခရာ 'ဇ' ဖြင့် စတင်ပါသည်။" },
+        { id: "m8", title: "ဍက္ကစာပေသမိုင်း", author: "ဒေါက်တာအောင်ဝင်း", filedAs: "ဍ", ruleExplanation: "ဗျည်းအက္ခရာ 'ဍ' ဖြင့် စတင်ပါသည်။" },
+        { id: "m9", title: "ဌာနဆိုင်ရာ လုပ်ငန်းလမ်းညွှန်", author: "ဦးဘိုးလှ", filedAs: "ဌ", ruleExplanation: "ဗျည်းအက္ခရာ 'ဌ' ဖြင့် စတင်ပါသည်။" },
+        { id: "m10", title: "ဏမိတ်ဆွေများ", author: "မောင်ကြည်လွင်", filedAs: "ဏ", ruleExplanation: "ဗျည်းအက္ခရာ 'ဏ' ဖြင့် စတင်ပါသည်။" }
+      ]
+    }
   ];
 
   useEffect(() => {
-    const activePool = level === 1 ? level1Pool : level2Pool;
-    const shuffled = [...activePool].sort(() => Math.random() - 0.5);
+    const pools = level === 1 ? level1Pools : level2Pools;
+    const uncompleted = pools.filter(p => !completedFilingIds.includes(p.id));
+    const activePool = uncompleted.length > 0 ? uncompleted[0] : pools[0];
+    
+    setCurrentSetId(activePool.id);
+    const shuffled = [...activePool.books].sort(() => Math.random() - 0.5);
     setShuffledBooks(shuffled);
     setUserSorted([]);
     setChecked(false);
@@ -83,13 +130,52 @@ export default function FilingGame({ user, onUpdateUser, onBack }: FilingGamePro
 
     if (isCorrect) {
       setScore(prev => prev + 50);
+      setSessionCompleted(prev => [...prev, currentSetId]);
     }
   };
 
   const handleFinish = async () => {
     setGameFinished(true);
+    const updatedCompleted = [...completedFilingIds, ...sessionCompleted];
+    try {
+      localStorage.setItem(`sivali_completed_filing_${user.id}`, JSON.stringify(updatedCompleted));
+    } catch (e) {
+      console.error(e);
+    }
+    setCompletedFilingIds(updatedCompleted);
+
     // Update score in Firestore
     await updateUserScore(user.id, "filing", score);
+  };
+
+  const resetGame = () => {
+    setLevel(1);
+    setScore(0);
+    setAttempts(0);
+    setShuffledBooks([]);
+    setUserSorted([]);
+    setChecked(false);
+    setSuccess(false);
+    setGameFinished(false);
+    setSessionCompleted([]);
+  };
+
+  const clearCompletionHistory = () => {
+    try {
+      localStorage.removeItem(`sivali_completed_filing_${user.id}`);
+    } catch (e) {
+      console.error(e);
+    }
+    setCompletedFilingIds([]);
+    setSessionCompleted([]);
+    setLevel(1);
+    setScore(0);
+    setAttempts(0);
+    setShuffledBooks([]);
+    setUserSorted([]);
+    setChecked(false);
+    setSuccess(false);
+    setGameFinished(false);
   };
 
   return (
@@ -320,29 +406,31 @@ export default function FilingGame({ user, onUpdateUser, onBack }: FilingGamePro
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => {
-                  setLevel(1);
-                  setScore(0);
-                  setAttempts(0);
-                  setShuffledBooks([]);
-                  setUserSorted([]);
-                  setChecked(false);
-                  setSuccess(false);
-                  setGameFinished(false);
-                }}
-                className="px-6 py-3 rounded-2xl font-semibold border border-white/20 hover:bg-white/10 text-white transition-all flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-5 h-5" />
-                <span>ပြန်လည်ကစားမည်</span>
-              </button>
-              <button
-                onClick={onBack}
-                className="px-8 py-3 rounded-2xl font-bold liquid-button"
-              >
-                ပင်မစာမျက်နှာသို့
-              </button>
+            <div className="flex flex-col gap-4 justify-center max-w-sm mx-auto">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={resetGame}
+                  className="px-6 py-3 rounded-2xl font-semibold border border-white/20 hover:bg-white/10 text-white transition-all flex items-center justify-center gap-2 grow"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  <span>ထပ်မံဆော့ကစားမည်</span>
+                </button>
+                <button
+                  onClick={onBack}
+                  className="px-8 py-3 rounded-2xl font-bold liquid-button grow"
+                >
+                  ပင်မစာမျက်နှာသို့
+                </button>
+              </div>
+
+              {completedFilingIds.length > 0 && (
+                <button
+                  onClick={clearCompletionHistory}
+                  className="text-xs text-red-300/60 hover:text-red-300 underline transition-all py-1"
+                >
+                  လေ့ကျင့်ခန်းမှတ်တမ်းကို ဖျက်ပြီး အစမှပြန်စမည် (Filing {completedFilingIds.length} ခု ပြီးစီး)
+                </button>
+              )}
             </div>
           </motion.div>
         )}

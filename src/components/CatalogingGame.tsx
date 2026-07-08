@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BookOpen, Award, CheckCircle2, AlertCircle, ArrowRight, RefreshCw, FileText } from "lucide-react";
 import { updateUserScore } from "../lib/db";
@@ -37,6 +37,19 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
   const [answers, setAnswers] = useState<Record<string, string>>({}); // questionId -> selectedOption
   const [checked, setChecked] = useState<boolean>(false);
   const [gameFinished, setGameFinished] = useState<boolean>(false);
+
+  // Completed Quiz IDs
+  const [completedQuizIds, setCompletedQuizIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`sivali_completed_catalog_${user.id}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [sessionCompleted, setSessionCompleted] = useState<string[]>([]);
+  const [activeQuizzes, setActiveQuizzes] = useState<CatalogQuiz[]>([]);
 
   // Quizzes with glassmorphic book title details
   const quizzes: CatalogQuiz[] = [
@@ -143,6 +156,13 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
     }
   ];
 
+  useEffect(() => {
+    const uncompleted = quizzes.filter(q => !completedQuizIds.includes(q.id));
+    const pool = uncompleted.length > 0 ? uncompleted : quizzes;
+    const selected = [...pool].sort(() => Math.random() - 0.5);
+    setActiveQuizzes(selected);
+  }, []);
+
   const handleSelectOption = (questionId: string, option: string) => {
     if (checked) return;
     setAnswers(prev => ({
@@ -152,7 +172,8 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
   };
 
   const handleCheckAnswers = () => {
-    const quiz = quizzes[currentQuizIdx];
+    if (activeQuizzes.length === 0) return;
+    const quiz = activeQuizzes[currentQuizIdx];
     let correctCount = 0;
     
     quiz.questions.forEach(q => {
@@ -164,21 +185,73 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
     // Score: 30 points per correct answer!
     setScore(prev => prev + (correctCount * 30));
     setChecked(true);
-  };
 
-  const handleNextQuiz = () => {
-    setAnswers({});
-    setChecked(false);
-    if (currentQuizIdx < quizzes.length - 1) {
-      setCurrentQuizIdx(prev => prev + 1);
-    } else {
-      setGameFinished(true);
-      // Update score in Firestore
-      updateUserScore(user.id, "cataloging", score);
+    if (correctCount === quiz.questions.length) {
+      setSessionCompleted(prev => [...prev, quiz.id]);
     }
   };
 
-  const currentQuiz = quizzes[currentQuizIdx];
+  const handleNextQuiz = async () => {
+    setAnswers({});
+    setChecked(false);
+    if (currentQuizIdx < activeQuizzes.length - 1) {
+      setCurrentQuizIdx(prev => prev + 1);
+    } else {
+      setGameFinished(true);
+      const updatedCompleted = [...completedQuizIds, ...sessionCompleted];
+      try {
+        localStorage.setItem(`sivali_completed_catalog_${user.id}`, JSON.stringify(updatedCompleted));
+      } catch (e) {
+        console.error(e);
+      }
+      setCompletedQuizIds(updatedCompleted);
+
+      // Update score in Firestore
+      await updateUserScore(user.id, "cataloging", score);
+    }
+  };
+
+  const resetGame = () => {
+    setScore(0);
+    setCurrentQuizIdx(0);
+    setAnswers({});
+    setChecked(false);
+    setGameFinished(false);
+    setSessionCompleted([]);
+
+    const uncompleted = quizzes.filter(q => !completedQuizIds.includes(q.id));
+    const pool = uncompleted.length > 0 ? uncompleted : quizzes;
+    const selected = [...pool].sort(() => Math.random() - 0.5);
+    setActiveQuizzes(selected);
+  };
+
+  const clearCompletionHistory = () => {
+    try {
+      localStorage.removeItem(`sivali_completed_catalog_${user.id}`);
+    } catch (e) {
+      console.error(e);
+    }
+    setCompletedQuizIds([]);
+    setSessionCompleted([]);
+    setScore(0);
+    setCurrentQuizIdx(0);
+    setAnswers({});
+    setChecked(false);
+    setGameFinished(false);
+
+    const selected = [...quizzes].sort(() => Math.random() - 0.5);
+    setActiveQuizzes(selected);
+  };
+
+  if (activeQuizzes.length === 0) {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-6 text-center text-white" id="catalog-loading">
+        လေ့ကျင့်ခန်းများ ပြင်ဆင်နေပါသည်...
+      </div>
+    );
+  }
+
+  const currentQuiz = activeQuizzes[currentQuizIdx];
   const allAnswered = currentQuiz.questions.every(q => answers[q.id] !== undefined);
 
   return (
@@ -278,7 +351,7 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
                 <div>
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider block">
-                      မေးခွန်းတွဲ {currentQuizIdx + 1} / {quizzes.length}
+                      မေးခွန်းတွဲ {currentQuizIdx + 1} / {activeQuizzes.length}
                     </span>
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       <FileText className="w-3.5 h-3.5" /> RDA/MARC Fields
@@ -388,26 +461,31 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => {
-                  setScore(0);
-                  setCurrentQuizIdx(0);
-                  setAnswers({});
-                  setChecked(false);
-                  setGameFinished(false);
-                }}
-                className="px-6 py-3 rounded-2xl font-semibold border border-white/20 hover:bg-white/10 text-white transition-all flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-5 h-5" />
-                <span>ပြန်လည်ကစားမည်</span>
-              </button>
-              <button
-                onClick={onBack}
-                className="px-8 py-3 rounded-2xl font-bold liquid-button"
-              >
-                ပင်မစာမျက်နှာသို့
-              </button>
+            <div className="flex flex-col gap-4 justify-center max-w-sm mx-auto">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={resetGame}
+                  className="px-6 py-3 rounded-2xl font-semibold border border-white/20 hover:bg-white/10 text-white transition-all flex items-center justify-center gap-2 grow"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  <span>ထပ်မံဆော့ကစားမည်</span>
+                </button>
+                <button
+                  onClick={onBack}
+                  className="px-8 py-3 rounded-2xl font-bold liquid-button grow"
+                >
+                  ပင်မစာမျက်နှာသို့
+                </button>
+              </div>
+
+              {completedQuizIds.length > 0 && (
+                <button
+                  onClick={clearCompletionHistory}
+                  className="text-xs text-red-300/60 hover:text-red-300 underline transition-all py-1"
+                >
+                  လေ့ကျင့်ခန်းမှတ်တမ်းကို ဖျက်ပြီး အစမှပြန်စမည် (ကတ်တလောက် {completedQuizIds.length} ခု ပြီးစီး)
+                </button>
+              )}
             </div>
           </motion.div>
         )}

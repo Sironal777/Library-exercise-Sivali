@@ -27,6 +27,10 @@
           "type": "number",
           "description": "High score for Subject Classification game."
         },
+        "gkScore": {
+          "type": "number",
+          "description": "High score for General Knowledge Quiz game."
+        },
         "lastActive": {
           "type": "timestamp",
           "description": "Last time the user played any game."

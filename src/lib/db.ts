@@ -114,6 +114,7 @@ export async function createUserProfile(username: string): Promise<UserProfile |
       catalogingScore: 0,
       filingScore: 0,
       subjectScore: 0,
+      gkScore: 0,
       lastActive: new Date().toISOString()
     };
     
@@ -132,7 +133,7 @@ export async function createUserProfile(username: string): Promise<UserProfile |
 // Update game high scores and recalculate total
 export async function updateUserScore(
   userId: string, 
-  game: "ddc" | "cataloging" | "filing" | "subject", 
+  game: "ddc" | "cataloging" | "filing" | "subject" | "gk", 
   score: number
 ): Promise<UserProfile | null> {
   const path = `${USERS_COLLECTION}/${userId}`;
@@ -148,7 +149,8 @@ export async function updateUserScore(
         ddc: "ddcScore",
         cataloging: "catalogingScore",
         filing: "filingScore",
-        subject: "subjectScore"
+        subject: "subjectScore",
+        gk: "gkScore"
       };
       
       const fieldName = scoreFieldMap[game];
@@ -160,7 +162,8 @@ export async function updateUserScore(
           (game === "ddc" ? score : (currentData.ddcScore || 0)) +
           (game === "cataloging" ? score : (currentData.catalogingScore || 0)) +
           (game === "filing" ? score : (currentData.filingScore || 0)) +
-          (game === "subject" ? score : (currentData.subjectScore || 0));
+          (game === "subject" ? score : (currentData.subjectScore || 0)) +
+          (game === "gk" ? score : (currentData.gkScore || 0));
           
         await updateDoc(docRef, {
           [fieldName]: score,
@@ -203,6 +206,7 @@ export async function getLeaderboard(limitCount: number = 50): Promise<UserProfi
         catalogingScore: data.catalogingScore || 0,
         filingScore: data.filingScore || 0,
         subjectScore: data.subjectScore || 0,
+        gkScore: data.gkScore || 0,
         lastActive: data.lastActive ? (data.lastActive.toDate ? data.lastActive.toDate().toISOString() : data.lastActive) : null
       });
     });

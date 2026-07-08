@@ -17,7 +17,8 @@ service cloud.firestore {
           && data.ddcScore is number
           && data.catalogingScore is number
           && data.filingScore is number
-          && data.subjectScore is number;
+          && data.subjectScore is number
+          && data.gkScore is number;
     }
 
     match /users/{userId} {
@@ -31,7 +32,8 @@ service cloud.firestore {
                     && request.resource.data.ddcScore == 0
                     && request.resource.data.catalogingScore == 0
                     && request.resource.data.filingScore == 0
-                    && request.resource.data.subjectScore == 0;
+                    && request.resource.data.subjectScore == 0
+                    && request.resource.data.gkScore == 0;
 
       // Allow profile score updates; ensure username is immutable
       allow update: if isValidUser(request.resource.data)
