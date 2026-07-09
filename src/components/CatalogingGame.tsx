@@ -64,6 +64,44 @@ interface LabBook {
   subjectHeading: string;
 }
 
+const mapTitlePageToLabBook = (titlePage: any, id: string): LabBook => {
+  const author = titlePage.author || "Unknown Author";
+  const authorParts = author.trim().split(/\s+/);
+  const authorInverted = authorParts.length > 1 
+    ? `${authorParts[authorParts.length - 1]}, ${authorParts.slice(0, authorParts.length - 1).join(" ")}`
+    : author;
+
+  const firstLetter = authorInverted.charAt(0).toUpperCase() || "A";
+  const randomClass = ["Z695", "BQ5630", "BQ2260", "Z662"][Math.floor(Math.random() * 4)];
+  const callNum = `${randomClass} .${firstLetter}${Math.floor(Math.random() * 90) + 10} ${titlePage.year || "2026"}`;
+
+  let subject = "Library science -- Burma -- Handbooks";
+  const lowerTitle = (titlePage.title || "").toLowerCase();
+  if (lowerTitle.includes("buddhism") || lowerTitle.includes("vipassana") || lowerTitle.includes("dhamma")) {
+    subject = "Theravada Buddhism -- Meditation -- Handbooks, manuals, etc.";
+  } else if (lowerTitle.includes("history") || lowerTitle.includes("ancient")) {
+    subject = "Myanmar -- History -- Sources";
+  }
+
+  return {
+    id: id,
+    title: titlePage.title || "Untitled Book",
+    subTitle: titlePage.subTitle || "",
+    author: author,
+    authorInverted: authorInverted,
+    edition: titlePage.edition || "1st Edition",
+    place: titlePage.place || "Yangon",
+    publisher: titlePage.publisher || "Universities Press",
+    year: titlePage.year || "2026",
+    pages: "220 pages",
+    illustrations: "illustrations, diagrams",
+    size: "22 cm",
+    isbn: titlePage.isbn || "978-99971-0-000-0",
+    callNumber: callNum,
+    subjectHeading: subject
+  };
+};
+
 export default function CatalogingGame({ user, onUpdateUser, onBack }: CatalogingGameProps) {
   const [activeTab, setActiveTab] = useState<"mcq" | "lab">("lab"); // Default to the interactive lab!
   const [score, setScore] = useState<number>(0);
@@ -205,6 +243,10 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
         const pool = uncompleted.length > 0 ? uncompleted : combined;
         const selected = [...pool].sort(() => Math.random() - 0.5);
         setActiveQuizzes(selected);
+
+        // Load custom questions into the interactive lab books array as well!
+        const customLabBooks = customQuizzes.map((q: any) => mapTitlePageToLabBook(q.titlePage, q.id));
+        setActiveLabBooks([...customLabBooks, ...labBooks]);
       } catch (err) {
         console.error("Error loading custom cataloging questions:", err);
         const uncompleted = quizzes.filter(q => !completedQuizIds.includes(q.id));
@@ -239,6 +281,18 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
       setCurrentQuizIdx(0);
       setMcqAnswers({});
       setMcqChecked(false);
+      
+      // Also add to activeLabBooks immediately so the user can practice it in the Lab!
+      const newLabBook = mapTitlePageToLabBook(data.titlePage, data.id);
+      setActiveLabBooks(prev => [newLabBook, ...prev]);
+      setCurrentLabIdx(0);
+      setLabStep(1);
+      setSelectedBlocks([]);
+      setStepChecked(false);
+      setStepError(null);
+      setCardTitleResponsibility("");
+      setCardImprint("");
+      setCardPhysicalDesc("");
       
       alert("✨ AI ဆရာတော်မှ သင့်အတွက် အသစ်စက်စက် ကတ်တလောက် သင်ခန်းစာမေးခွန်းတစ်ခုကို အောင်မြင်စွာ ဖန်တီးပေးလိုက်ပါပြီ။");
     } catch (err) {
@@ -379,8 +433,9 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
     }
   ];
 
+  const [activeLabBooks, setActiveLabBooks] = useState<LabBook[]>(labBooks);
   const [currentLabIdx, setCurrentLabIdx] = useState<number>(0);
-  const labBook = labBooks[currentLabIdx];
+  const labBook = activeLabBooks[currentLabIdx] || activeLabBooks[0] || labBooks[0];
 
   // Steps in the lab:
   // 1. MARC 245 assembly (Title Statement)
@@ -635,6 +690,14 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
           </p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
+          <button
+            onClick={handleAskAi}
+            disabled={aiGenerating}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-pink-500 to-purple-500 border border-pink-400 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-[0_0_15px_rgba(236,72,153,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0 animate-pulse hover:animate-none"
+          >
+            {aiGenerating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-glow" />}
+            <span>{aiGenerating ? "AI ဖန်တီးပေးနေပါသည်..." : "AI သင်ခန်းစာအသစ်တောင်းမည်"}</span>
+          </button>
           <div className="bg-white/10 px-3 py-2 rounded-2xl border border-white/20 text-center">
             <div className="text-[10px] text-slate-400">စုစုပေါင်းရမှတ်</div>
             <div className="text-lg font-extrabold text-pink-400">{score} pts</div>

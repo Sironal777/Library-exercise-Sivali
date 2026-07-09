@@ -126,6 +126,38 @@ export default function App() {
     };
   }, []);
 
+  // Periodic check to verify user account is still valid and not blocked/deleted
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const profile = await getUserProfile(user.id);
+        if (!profile || profile.isBlocked) {
+          // If profile is deleted or blocked, force logout
+          handleLogout();
+          alert(profile?.isBlocked 
+            ? "⚠️ သင့်အကောင့်အား စနစ်စီမံခန့်ခွဲသူမှ ပိတ်ပင်ထားပါသည်။" 
+            : "⚠️ သင့်အကောင့်မှာ စာရင်းမှ ဖျက်သိမ်းခံထားရပါသည်။"
+          );
+        } else if (profile.username !== user.username || 
+                   profile.ddcScore !== user.ddcScore || 
+                   profile.catalogingScore !== user.catalogingScore || 
+                   profile.filingScore !== user.filingScore || 
+                   profile.subjectScore !== user.subjectScore || 
+                   profile.gkScore !== user.gkScore ||
+                   profile.totalPoints !== user.totalPoints) {
+          // If admin edited the profile (e.g. edited username or points), update state in real-time!
+          setUser(profile);
+        }
+      } catch (err) {
+        console.error("Periodic user check error:", err);
+      }
+    }, 10000); // Check every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
   const saveToPastUsers = (profile: UserProfile) => {
     try {
       const stored = localStorage.getItem("sivali_past_users");

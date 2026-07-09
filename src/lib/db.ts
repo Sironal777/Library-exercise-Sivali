@@ -331,4 +331,23 @@ export async function deleteCustomQuestion(id: string): Promise<boolean> {
   return false;
 }
 
+// Admin update user profile (username, scores, points, blocked status)
+export async function adminUpdateUserProfile(
+  userId: string,
+  updates: Partial<UserProfile>
+): Promise<boolean> {
+  const path = `${USERS_COLLECTION}/${userId}`;
+  try {
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    await updateDoc(docRef, {
+      ...updates,
+      lastActive: serverTimestamp()
+    });
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+  return false;
+}
+
 

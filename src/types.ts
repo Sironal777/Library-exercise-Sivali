@@ -8,6 +8,7 @@ export interface UserProfile {
   subjectScore: number;
   gkScore: number;
   lastActive: any; // Timestamp or ISO string
+  isBlocked?: boolean;
 }
 
 export interface BookItem {

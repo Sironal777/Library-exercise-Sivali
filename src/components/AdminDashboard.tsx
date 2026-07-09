@@ -16,7 +16,10 @@ import {
   FolderPlus,
   Shield,
   HelpCircle,
-  Database
+  Database,
+  Edit,
+  Lock,
+  Unlock
 } from "lucide-react";
 import { 
   getAllUsers, 
@@ -37,6 +40,15 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<"users" | "lessons" | "create">("users");
   
+  // User Editing States
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editUsername, setEditUsername] = useState<string>("");
+  const [editDdcScore, setEditDdcScore] = useState<number>(0);
+  const [editCatalogingScore, setEditCatalogingScore] = useState<number>(0);
+  const [editFilingScore, setEditFilingScore] = useState<number>(0);
+  const [editSubjectScore, setEditSubjectScore] = useState<number>(0);
+  const [editGkScore, setEditGkScore] = useState<number>(0);
+
   // Search query
   const [searchQuery, setSearchQuery] = useState<string>("");
   
@@ -196,6 +208,75 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     }
   };
 
+  const handleToggleBlockUser = async (user: UserProfile) => {
+    const isBlocking = !user.isBlocked;
+    const confirmMsg = isBlocking 
+      ? `အသုံးပြုသူ "${user.username}" ၏အကောင့်အား ပိတ်ပင် (Suspend) ရန် သေချာပါသလား?` 
+      : `အသုံးပြုသူ "${user.username}" ၏အကောင့်အား ပြန်လည်ဖွင့်ပေးရန် သေချာပါသလား?`;
+      
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+    
+    try {
+      const { adminUpdateUserProfile } = await import("../lib/db");
+      const success = await adminUpdateUserProfile(user.id, { isBlocked: isBlocking });
+      if (success) {
+        showFeedback(`"${user.username}" အား ${isBlocking ? "ပိတ်ပင်လိုက်ပါပြီ" : "ပြန်လည်ဖွင့်ပေးလိုက်ပါပြီ"}။`, "success");
+        setUsers(users.map(u => u.id === user.id ? { ...u, isBlocked: isBlocking } : u));
+      } else {
+        showFeedback("လုပ်ဆောင်ချက် မအောင်မြင်ပါ။", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showFeedback("ချိတ်ဆက်မှု အမှားအယွင်းရှိနေသည်။", "error");
+    }
+  };
+
+  const handleSaveEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    if (editUsername.trim().length < 2 || editUsername.trim().length > 15) {
+      showFeedback("အသုံးပြုသူအမည်သည် စာလုံးရေ ၂ လုံးမှ ၁၅ လုံးအထိ ဖြစ်ရပါမည်။", "error");
+      return;
+    }
+
+    const total = editDdcScore + editCatalogingScore + editFilingScore + editSubjectScore + editGkScore;
+    
+    try {
+      const { adminUpdateUserProfile } = await import("../lib/db");
+      const success = await adminUpdateUserProfile(editingUser.id, {
+        username: editUsername.trim(),
+        ddcScore: editDdcScore,
+        catalogingScore: editCatalogingScore,
+        filingScore: editFilingScore,
+        subjectScore: editSubjectScore,
+        gkScore: editGkScore,
+        totalPoints: total
+      });
+      
+      if (success) {
+        showFeedback(`"${editUsername}" ၏ အချက်အလက်များအား ပြင်ဆင်သိမ်းဆည်းပြီးပါပြီ။`, "success");
+        setUsers(users.map(u => u.id === editingUser.id ? {
+          ...u,
+          username: editUsername.trim(),
+          ddcScore: editDdcScore,
+          catalogingScore: editCatalogingScore,
+          filingScore: editFilingScore,
+          subjectScore: editSubjectScore,
+          gkScore: editGkScore,
+          totalPoints: total
+        } : u));
+        setEditingUser(null);
+      } else {
+        showFeedback("ပြင်ဆင်မှု သိမ်းဆည်းခြင်း မအောင်မြင်ပါ။", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showFeedback("ပြင်ဆင်မှု သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိနေသည်။", "error");
+    }
+  };
+
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -323,7 +404,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                             <div className="w-7 h-7 rounded-full bg-pink-500/10 flex items-center justify-center border border-pink-500/20">
                               <User className="w-3.5 h-3.5 text-pink-400" />
                             </div>
-                            {item.username}
+                            <span>{item.username}</span>
+                            {item.isBlocked && (
+                              <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[9px] uppercase font-black px-1.5 py-0.5 rounded shadow">
+                                BLOCKED
+                              </span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4 font-black text-pink-400">{item.totalPoints} pts</td>
                           <td className="py-3.5 px-4 text-xs text-slate-400 hidden md:table-cell">
@@ -333,13 +419,43 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                             {item.lastActive ? new Date(item.lastActive).toLocaleDateString("my-MM") : "မရှိပါ"}
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <button
-                              onClick={() => handleDeleteUser(item.id, item.username)}
-                              className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/30 transition-all cursor-pointer"
-                              title="အကောင့်ဖျက်မည်"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingUser(item);
+                                  setEditUsername(item.username);
+                                  setEditDdcScore(item.ddcScore || 0);
+                                  setEditCatalogingScore(item.catalogingScore || 0);
+                                  setEditFilingScore(item.filingScore || 0);
+                                  setEditSubjectScore(item.subjectScore || 0);
+                                  setEditGkScore(item.gkScore || 0);
+                                }}
+                                className="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/30 transition-all cursor-pointer"
+                                title="အကောင့်အချက်အလက် ပြင်မည်"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              
+                              <button
+                                onClick={() => handleToggleBlockUser(item)}
+                                className={`p-2 rounded-lg border transition-all cursor-pointer ${
+                                  item.isBlocked 
+                                    ? "bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/20 hover:border-amber-500/30" 
+                                    : "bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border-teal-500/20 hover:border-teal-500/30"
+                                }`}
+                                title={item.isBlocked ? "အကောင့်ပြန်ဖွင့်မည် (Unlock)" : "အကောင့်ပိတ်မည် (Suspend)"}
+                              >
+                                {item.isBlocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteUser(item.id, item.username)}
+                                className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/30 transition-all cursor-pointer"
+                                title="အကောင့်ဖျက်မည်"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -625,6 +741,119 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
         </div>
       )}
+
+      {/* Edit User Modal */}
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#120a2a] border border-white/10 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative text-white"
+            >
+              <button
+                onClick={() => setEditingUser(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2 border-b border-white/10 pb-3">
+                <Edit className="w-5 h-5 text-pink-400" />
+                <span>အကောင့်ပြင်ဆင်ရန် - {editingUser.username}</span>
+              </h3>
+
+              <form onSubmit={handleSaveEditUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-slate-400 mb-2">အသုံးပြုသူအမည်</label>
+                  <input
+                    type="text"
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                    className="w-full py-2.5 px-4 rounded-xl text-sm glass-input"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">DDC ရမှတ်</label>
+                    <input
+                      type="number"
+                      value={editDdcScore}
+                      onChange={(e) => setEditDdcScore(Math.max(0, Number(e.target.value)))}
+                      className="w-full py-2 px-3 rounded-xl text-sm glass-input text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Cataloging ရမှတ်</label>
+                    <input
+                      type="number"
+                      value={editCatalogingScore}
+                      onChange={(e) => setEditCatalogingScore(Math.max(0, Number(e.target.value)))}
+                      className="w-full py-2 px-3 rounded-xl text-sm glass-input text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Filing ရမှတ်</label>
+                    <input
+                      type="number"
+                      value={editFilingScore}
+                      onChange={(e) => setEditFilingScore(Math.max(0, Number(e.target.value)))}
+                      className="w-full py-2 px-3 rounded-xl text-sm glass-input text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">Subject ရမှတ်</label>
+                    <input
+                      type="number"
+                      value={editSubjectScore}
+                      onChange={(e) => setEditSubjectScore(Math.max(0, Number(e.target.value)))}
+                      className="w-full py-2 px-3 rounded-xl text-sm glass-input text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">GK ရမှတ်</label>
+                    <input
+                      type="number"
+                      value={editGkScore}
+                      onChange={(e) => setEditGkScore(Math.max(0, Number(e.target.value)))}
+                      className="w-full py-2 px-3 rounded-xl text-sm glass-input text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">ခန့်မှန်းစုစုပေါင်းရမှတ်</label>
+                    <div className="w-full py-2 px-3 rounded-xl text-sm bg-white/5 border border-white/10 text-pink-400 font-extrabold flex items-center justify-between">
+                      <span>Total:</span>
+                      <span>{editDdcScore + editCatalogingScore + editFilingScore + editSubjectScore + editGkScore} pts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setEditingUser(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold border border-white/10 hover:bg-white/5 text-slate-300 transition-all cursor-pointer"
+                  >
+                    မလုပ်တော့ပါ
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-pink-500 hover:bg-pink-600 text-white transition-all cursor-pointer shadow-lg shadow-pink-500/20"
+                  >
+                    သိမ်းဆည်းမည်
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

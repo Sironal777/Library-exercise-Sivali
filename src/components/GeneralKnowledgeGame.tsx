@@ -283,7 +283,13 @@ export default function GeneralKnowledgeGame({ user, onUpdateUser, onBack }: Gen
         const cqs = await getCustomQuestions("gk");
         setCustomQuestions(cqs);
         
-        const customItems = cqs.map((q: any) => q.questionData);
+        const customItems = cqs.map((q: any) => {
+          const item = q.questionData;
+          if (item && item.correctIndex !== undefined && item.correctAnswerIdx === undefined) {
+            item.correctAnswerIdx = item.correctIndex;
+          }
+          return item;
+        });
         const combinedPool = [...customItems, ...questionsPool];
         
         // Filter out already answered questions to prevent repeating
@@ -317,7 +323,13 @@ export default function GeneralKnowledgeGame({ user, onUpdateUser, onBack }: Gen
     setGameFinished(false);
     setSessionCompletedIds([]);
 
-    const customItems = customQuestions.map((q: any) => q.questionData);
+    const customItems = customQuestions.map((q: any) => {
+      const item = q.questionData;
+      if (item && item.correctIndex !== undefined && item.correctAnswerIdx === undefined) {
+        item.correctAnswerIdx = item.correctIndex;
+      }
+      return item;
+    });
     const combinedPool = [...customItems, ...questionsPool];
     const uncompleted = combinedPool.filter(q => !completedQuestionIds.includes(q.id));
     const pool = uncompleted.length >= 5 ? uncompleted : combinedPool;
@@ -346,8 +358,16 @@ export default function GeneralKnowledgeGame({ user, onUpdateUser, onBack }: Gen
       const { addCustomQuestion } = await import("../lib/db");
       await addCustomQuestion("gk", 1, data);
 
+      const parsedData = { ...data };
+      if (parsedData.correctIndex !== undefined && parsedData.correctAnswerIdx === undefined) {
+        parsedData.correctAnswerIdx = parsedData.correctIndex;
+      }
+
+      // Update custom questions list so it's kept in state
+      setCustomQuestions(prev => [{ questionData: parsedData, level: 1, gameType: "gk" }, ...prev]);
+
       // Instantly set as active list
-      setSessionQuestions(prev => [data, ...prev]);
+      setSessionQuestions(prev => [parsedData, ...prev]);
       setCurrentIdx(0);
       setSelectedAns(null);
       setChecked(false);

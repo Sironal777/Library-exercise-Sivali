@@ -141,6 +141,9 @@ export default function FilingGame({ user, onUpdateUser, onBack }: FilingGamePro
       const { addCustomQuestion } = await import("../lib/db");
       await addCustomQuestion("filing", level, data);
 
+      // Add to customQuestions state so it persists in the active state pool
+      setCustomQuestions(prev => [{ questionData: data, level, gameType: "filing" }, ...prev]);
+
       // Instantly set as active set
       setCurrentSetId(data.id);
       const shuffled = [...data.books].sort(() => Math.random() - 0.5);

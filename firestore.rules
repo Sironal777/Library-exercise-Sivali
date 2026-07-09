@@ -18,7 +18,8 @@ service cloud.firestore {
           && data.catalogingScore is number
           && data.filingScore is number
           && data.subjectScore is number
-          && data.gkScore is number;
+          && data.gkScore is number
+          && (!('isBlocked' in data) || data.isBlocked is bool);
     }
 
     match /users/{userId} {
@@ -35,10 +36,9 @@ service cloud.firestore {
                     && request.resource.data.subjectScore == 0
                     && request.resource.data.gkScore == 0;
 
-      // Allow profile score updates; ensure username is immutable
+      // Allow profile score updates, block status, or name edits
       allow update: if isValidUser(request.resource.data)
-                    && request.resource.data.id == userId
-                    && request.resource.data.username == resource.data.username;
+                    && request.resource.data.id == userId;
 
       // Allow admin-driven deletion
       allow delete: if true;
