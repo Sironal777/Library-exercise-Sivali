@@ -431,7 +431,7 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
           <button
             onClick={handleAskAi}
             disabled={aiGenerating}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-pink-500/20 hover:bg-pink-500/35 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 transition-all cursor-pointer shadow-lg"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-pink-500/20 hover:bg-pink-500/35 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 transition-all cursor-pointer shadow-lg animate-pulse"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>{aiGenerating ? "Generating..." : "AI သင်ခန်းစာသစ် တောင်းမည်"}</span>
