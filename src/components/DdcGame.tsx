@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Book, Award, ArrowRight, RefreshCw, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
+import { Book, Award, ArrowRight, RefreshCw, CheckCircle2, AlertCircle, HelpCircle, Sparkles } from "lucide-react";
 import { updateUserScore } from "../lib/db";
 import { UserProfile } from "../types";
 
@@ -166,19 +166,41 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
   // Filter Match Questions
   const [activeMatchQuestions, setActiveMatchQuestions] = useState<MatchQuestion[]>([]);
   const [activeSortSet, setActiveSortSet] = useState<{ id: string; books: SortBook[] } | null>(null);
+  const [customQuestions, setCustomQuestions] = useState<any[]>([]);
+  const [aiGenerating, setAiGenerating] = useState<boolean>(false);
 
   useEffect(() => {
-    const uncompleted = matchQuestions.filter(q => !completedMatchIds.includes(q.id));
-    const pool = uncompleted.length > 0 ? uncompleted : matchQuestions;
-    const selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-    setActiveMatchQuestions(selected);
+    async function fetchCustomAndInit() {
+      try {
+        const { getCustomQuestions } = await import("../lib/db");
+        const cqs = await getCustomQuestions("ddc");
+        setCustomQuestions(cqs);
+        
+        // Match Level 1 custom questions
+        const customL1 = cqs.filter((q: any) => q.level === 1).map((q: any) => q.questionData);
+        const combinedMatch = [...customL1, ...matchQuestions];
+        const uncompleted = combinedMatch.filter(q => !completedMatchIds.includes(q.id));
+        const pool = uncompleted.length > 0 ? uncompleted : combinedMatch;
+        const selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+        setActiveMatchQuestions(selected);
+      } catch (err) {
+        console.error("Error loading custom questions:", err);
+        const uncompleted = matchQuestions.filter(q => !completedMatchIds.includes(q.id));
+        const pool = uncompleted.length > 0 ? uncompleted : matchQuestions;
+        const selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+        setActiveMatchQuestions(selected);
+      }
+    }
+    fetchCustomAndInit();
   }, []);
 
   // Initialize sorting game for Level 2
   useEffect(() => {
     if (level === 2) {
-      const uncompleted = sortPool.filter(s => !completedSortIds.includes(s.id));
-      const pool = uncompleted.length > 0 ? uncompleted : sortPool;
+      const customL2 = customQuestions.filter((q: any) => q.level === 2).map((q: any) => q.questionData);
+      const combinedSort = [...customL2, ...sortPool];
+      const uncompleted = combinedSort.filter(s => !completedSortIds.includes(s.id));
+      const pool = uncompleted.length > 0 ? uncompleted : combinedSort;
       const selectedSet = pool[Math.floor(Math.random() * pool.length)];
       setActiveSortSet(selectedSet);
 
@@ -189,7 +211,49 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
       setSortChecked(false);
       setSortSuccess(false);
     }
-  }, [level, attempts]);
+  }, [level, attempts, customQuestions]);
+
+  const handleAskAi = async () => {
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/lessons/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameType: "ddc", level })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      // Save to firestore collection custom_questions
+      const { addCustomQuestion } = await import("../lib/db");
+      await addCustomQuestion("ddc", level, data);
+
+      if (level === 1) {
+        // Prepend to active questions and set index to 0
+        setActiveMatchQuestions(prev => [data, ...prev]);
+        setCurrentMatchIdx(0);
+        setSelectedDdc(null);
+        setMatchChecked(false);
+      } else {
+        // Set up active set immediately
+        setActiveSortSet(data);
+        const shuffled = [...data.books].sort(() => Math.random() - 0.5);
+        setSortBooks(shuffled);
+        setUserSorted([]);
+        setSortChecked(false);
+        setSortSuccess(false);
+      }
+      alert("✨ AI ဆရာတော်မှ သင့်အတွက် အသစ်စက်စက် သင်ခန်းစာမေးခွန်းတစ်ခုကို အောင်မြင်စွာ ဖန်တီးပေးလိုက်ပါပြီ။");
+    } catch (err) {
+      console.error(err);
+      alert("AI သင်ခန်းစာ တောင်းဆိုရန် အဆင်မပြေပါ။ နောက်မှ ပြန်လည်ကြိုးစားပါ။");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   // Handle Match Option Click
   const handleOptionClick = (code: string) => {
@@ -363,14 +427,22 @@ export default function DdcGame({ user, onUpdateUser, onBack }: DdcGameProps) {
             စာကြည့်တိုက်သုံး ဆယ်စုစိတ် စနစ်ဖြင့် စာအုပ်များကို အမှတ်စဉ်ခွဲခြင်း လေ့ကျင့်ခန်း
           </p>
         </div>
-        <div className="flex gap-4 items-center">
-          <div className="bg-white/10 px-4 py-2 rounded-2xl border border-white/20 text-center">
-            <div className="text-xs text-slate-400">လက်ရှိအမှတ်</div>
-            <div className="text-xl font-extrabold text-cyan-400">{score} pts</div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            onClick={handleAskAi}
+            disabled={aiGenerating}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-pink-500/20 hover:bg-pink-500/35 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 transition-all cursor-pointer shadow-lg"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{aiGenerating ? "Generating..." : "AI သင်ခန်းစာသစ် တောင်းမည်"}</span>
+          </button>
+          <div className="bg-white/10 px-3 py-2 rounded-2xl border border-white/20 text-center">
+            <div className="text-[10px] text-slate-400">လက်ရှိအမှတ်</div>
+            <div className="text-lg font-extrabold text-cyan-400">{score} pts</div>
           </div>
           <button 
             onClick={onBack}
-            className="px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 text-white text-sm transition-all"
+            className="px-3 py-2 rounded-xl border border-white/10 hover:bg-white/10 text-white text-sm transition-all cursor-pointer"
           >
             ထွက်မည်
           </button>

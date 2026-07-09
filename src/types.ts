@@ -40,4 +40,4 @@ export interface CatalogQuizItem {
   }[];
 }
 
-export type ActiveScreen = "login" | "dashboard" | "game_ddc" | "game_catalog" | "game_filing" | "game_subject" | "game_gk" | "leaderboard";
+export type ActiveScreen = "login" | "dashboard" | "game_ddc" | "game_catalog" | "game_filing" | "game_subject" | "game_gk" | "leaderboard" | "admin";

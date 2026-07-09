@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { AlignLeft, Award, CheckCircle2, AlertCircle, RefreshCw, ArrowRight } from "lucide-react";
+import { AlignLeft, Award, CheckCircle2, AlertCircle, RefreshCw, ArrowRight, Sparkles } from "lucide-react";
 import { updateUserScore } from "../lib/db";
 import { UserProfile } from "../types";
 
@@ -91,18 +91,72 @@ export default function FilingGame({ user, onUpdateUser, onBack }: FilingGamePro
     }
   ];
 
+  const [customQuestions, setCustomQuestions] = useState<any[]>([]);
+  const [aiGenerating, setAiGenerating] = useState<boolean>(false);
+
   useEffect(() => {
-    const pools = level === 1 ? level1Pools : level2Pools;
+    async function fetchCustomAndInit() {
+      try {
+        const { getCustomQuestions } = await import("../lib/db");
+        const cqs = await getCustomQuestions("filing");
+        setCustomQuestions(cqs);
+      } catch (err) {
+        console.error("Error fetching filing custom questions:", err);
+      }
+    }
+    fetchCustomAndInit();
+  }, []);
+
+  useEffect(() => {
+    const customSets = customQuestions.filter((q: any) => q.level === level).map((q: any) => q.questionData);
+    const pools = level === 1 ? [...customSets, ...level1Pools] : [...customSets, ...level2Pools];
     const uncompleted = pools.filter(p => !completedFilingIds.includes(p.id));
     const activePool = uncompleted.length > 0 ? uncompleted[0] : pools[0];
     
-    setCurrentSetId(activePool.id);
-    const shuffled = [...activePool.books].sort(() => Math.random() - 0.5);
-    setShuffledBooks(shuffled);
-    setUserSorted([]);
-    setChecked(false);
-    setSuccess(false);
-  }, [level, attempts]);
+    if (activePool) {
+      setCurrentSetId(activePool.id);
+      const shuffled = [...activePool.books].sort(() => Math.random() - 0.5);
+      setShuffledBooks(shuffled);
+      setUserSorted([]);
+      setChecked(false);
+      setSuccess(false);
+    }
+  }, [level, attempts, customQuestions]);
+
+  const handleAskAi = async () => {
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/lessons/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameType: "filing", level })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      // Save to firestore
+      const { addCustomQuestion } = await import("../lib/db");
+      await addCustomQuestion("filing", level, data);
+
+      // Instantly set as active set
+      setCurrentSetId(data.id);
+      const shuffled = [...data.books].sort(() => Math.random() - 0.5);
+      setShuffledBooks(shuffled);
+      setUserSorted([]);
+      setChecked(false);
+      setSuccess(false);
+
+      alert("✨ AI ဆရာတော်မှ သင့်အတွက် အသစ်စက်စက် အက္ခရာစဉ်စီနည်း သင်ခန်းစာမေးခွန်းတစ်ခုကို အောင်မြင်စွာ ဖန်တီးပေးလိုက်ပါပြီ။");
+    } catch (err) {
+      console.error(err);
+      alert("AI သင်ခန်းစာ တောင်းဆိုရန် အဆင်မပြေပါ။ နောက်မှ ပြန်လည်ကြိုးစားပါ။");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const selectBook = (book: FileBook) => {
     if (checked) return;
@@ -191,14 +245,22 @@ export default function FilingGame({ user, onUpdateUser, onBack }: FilingGamePro
             စာအုပ်များကို အက္ခရာစဉ်အလိုက် (A/An/The ကနဦးစကားလုံးချန်လှပ်မှုနည်းလမ်း) စီစဉ်ခြင်းလေ့ကျင့်ခန်း
           </p>
         </div>
-        <div className="flex gap-4 items-center">
-          <div className="bg-white/10 px-4 py-2 rounded-2xl border border-white/20 text-center">
-            <div className="text-xs text-slate-400">လက်ရှိအမှတ်</div>
-            <div className="text-xl font-extrabold text-pink-400">{score} pts</div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            onClick={handleAskAi}
+            disabled={aiGenerating}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-pink-500/20 hover:bg-pink-500/35 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 transition-all cursor-pointer shadow-lg animate-pulse"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{aiGenerating ? "Generating..." : "AI သင်ခန်းစာသစ် တောင်းမည်"}</span>
+          </button>
+          <div className="bg-white/10 px-3 py-2 rounded-2xl border border-white/20 text-center">
+            <div className="text-[10px] text-slate-400">လက်ရှိအမှတ်</div>
+            <div className="text-lg font-extrabold text-pink-400">{score} pts</div>
           </div>
           <button 
             onClick={onBack}
-            className="px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 text-white text-sm transition-all"
+            className="px-3 py-2 rounded-xl border border-white/10 hover:bg-white/10 text-white text-sm transition-all cursor-pointer"
           >
             ထွက်မည်
           </button>

@@ -40,8 +40,12 @@ service cloud.firestore {
                     && request.resource.data.id == userId
                     && request.resource.data.username == resource.data.username;
 
-      // Deny delete
-      allow delete: if false;
+      // Allow admin-driven deletion
+      allow delete: if true;
+    }
+
+    match /custom_questions/{questionId} {
+      allow read, write, list, delete: if true;
     }
   }
 }

@@ -10,7 +10,8 @@ import {
   Info, 
   ChevronRight, 
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  Sparkles
 } from "lucide-react";
 import { updateUserScore } from "../lib/db";
 import { UserProfile } from "../types";
@@ -271,10 +272,39 @@ export default function GeneralKnowledgeGame({ user, onUpdateUser, onBack }: Gen
   const [gameFinished, setGameFinished] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [dbSaving, setDbSaving] = useState<boolean>(false);
+  const [customQuestions, setCustomQuestions] = useState<any[]>([]);
+  const [aiGenerating, setAiGenerating] = useState<boolean>(false);
 
   // Initialize a round of 5 questions
   useEffect(() => {
-    initializeRound();
+    async function fetchCustomAndInit() {
+      try {
+        const { getCustomQuestions } = await import("../lib/db");
+        const cqs = await getCustomQuestions("gk");
+        setCustomQuestions(cqs);
+        
+        const customItems = cqs.map((q: any) => q.questionData);
+        const combinedPool = [...customItems, ...questionsPool];
+        
+        // Filter out already answered questions to prevent repeating
+        const uncompleted = combinedPool.filter(q => !completedQuestionIds.includes(q.id));
+        const pool = uncompleted.length >= 5 ? uncompleted : combinedPool;
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, 5);
+        
+        setSessionQuestions(selected);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching custom GK questions:", err);
+        const uncompleted = questionsPool.filter(q => !completedQuestionIds.includes(q.id));
+        const pool = uncompleted.length >= 5 ? uncompleted : questionsPool;
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, 5);
+        setSessionQuestions(selected);
+        setLoading(false);
+      }
+    }
+    fetchCustomAndInit();
   }, []);
 
   const initializeRound = () => {
@@ -287,18 +317,48 @@ export default function GeneralKnowledgeGame({ user, onUpdateUser, onBack }: Gen
     setGameFinished(false);
     setSessionCompletedIds([]);
 
-    // Filter out already answered questions to prevent repeating
-    const uncompleted = questionsPool.filter(q => !completedQuestionIds.includes(q.id));
-    
-    // Determine the pool: if all are completed or less than 5 are left, use full pool
-    const pool = uncompleted.length >= 5 ? uncompleted : questionsPool;
-    
-    // Pick 5 random questions
+    const customItems = customQuestions.map((q: any) => q.questionData);
+    const combinedPool = [...customItems, ...questionsPool];
+    const uncompleted = combinedPool.filter(q => !completedQuestionIds.includes(q.id));
+    const pool = uncompleted.length >= 5 ? uncompleted : combinedPool;
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 5);
     
     setSessionQuestions(selected);
     setLoading(false);
+  };
+
+  const handleAskAi = async () => {
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/lessons/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameType: "gk" })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      // Save to firestore custom_questions
+      const { addCustomQuestion } = await import("../lib/db");
+      await addCustomQuestion("gk", 1, data);
+
+      // Instantly set as active list
+      setSessionQuestions(prev => [data, ...prev]);
+      setCurrentIdx(0);
+      setSelectedAns(null);
+      setChecked(false);
+
+      alert("✨ AI ဆရာတော်မှ သင့်အတွက် အသစ်စက်စက် အထွေထွေဗဟုသုတမေးခွန်းတစ်ခုကို အောင်မြင်စွာ ဖန်တီးပေးလိုက်ပါပြီ။");
+    } catch (err) {
+      console.error(err);
+      alert("AI သင်ခန်းစာ တောင်းဆိုရန် အဆင်မပြေပါ။ နောက်မှ ပြန်လည်ကြိုးစားပါ။");
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   const handleSelectOption = (idx: number) => {
@@ -405,15 +465,23 @@ export default function GeneralKnowledgeGame({ user, onUpdateUser, onBack }: Gen
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <div className="bg-white/[0.03] border border-white/10 px-4 py-2 rounded-2xl text-xs flex items-center gap-2 shadow-inner">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+          <button
+            onClick={handleAskAi}
+            disabled={aiGenerating}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-pink-500/20 hover:bg-pink-500/35 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 transition-all cursor-pointer shadow-lg animate-pulse"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{aiGenerating ? "Generating..." : "AI သင်ခန်းစာသစ် တောင်းမည်"}</span>
+          </button>
+          <div className="bg-white/[0.03] border border-white/10 px-3 py-2 rounded-2xl text-xs flex items-center gap-2 shadow-inner">
             <TrendingUp className="w-4 h-4 text-cyan-400" />
             <span className="text-slate-300">HighScore:</span>
             <span className="font-display font-black text-cyan-400 text-glow-cyan text-sm">{user.gkScore || 0} pts</span>
           </div>
           <button
             onClick={onBack}
-            className="px-5 py-2 rounded-2xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all text-xs font-bold"
+            className="px-3 py-2 rounded-2xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/5 transition-all text-xs font-bold cursor-pointer"
           >
             ပင်မသို့
           </button>

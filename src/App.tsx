@@ -14,7 +14,11 @@ import {
   AlignLeft,
   Tags,
   Search,
-  HelpCircle
+  HelpCircle,
+  Settings,
+  Sparkles,
+  Smartphone,
+  ArrowDown
 } from "lucide-react";
 import { 
   getUserProfile, 
@@ -30,6 +34,7 @@ import CatalogingGame from "./components/CatalogingGame";
 import FilingGame from "./components/FilingGame";
 import SubjectGame from "./components/SubjectGame";
 import GeneralKnowledgeGame from "./components/GeneralKnowledgeGame";
+import AdminDashboard from "./components/AdminDashboard";
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>("login");
@@ -43,7 +48,38 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [userMatchFound, setUserMatchFound] = useState<UserProfile | null>(null);
 
-  // Load user from localStorage on init
+  // Accessibility / Theme States
+  const [theme, setTheme] = useState<"dark" | "light">(
+    () => (localStorage.getItem("sivali_theme") as "dark" | "light") || "dark"
+  );
+  const [fontScale, setFontScale] = useState<number>(
+    () => Number(localStorage.getItem("sivali_fontScale")) || 100
+  );
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+
+  // PWA states
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(true);
+
+  // Previously logged in users
+  const [pastUsers, setPastUsers] = useState<UserProfile[]>([]);
+
+  // Toggle Theme class on document Element
+  useEffect(() => {
+    localStorage.setItem("sivali_theme", theme);
+    if (theme === "light") {
+      document.documentElement.classList.add("light");
+    } else {
+      document.documentElement.classList.remove("light");
+    }
+  }, [theme]);
+
+  // Save Font Scale selection
+  useEffect(() => {
+    localStorage.setItem("sivali_fontScale", fontScale.toString());
+  }, [fontScale]);
+
+  // Load user, past users and PWA prompt on mount
   useEffect(() => {
     async function initUser() {
       try {
@@ -52,6 +88,7 @@ export default function App() {
           const profile = await getUserProfile(savedUserId);
           if (profile) {
             setUser(profile);
+            saveToPastUsers(profile);
             setActiveScreen("dashboard");
           } else {
             localStorage.removeItem("sivali_library_userId");
@@ -63,9 +100,66 @@ export default function App() {
         setLoading(false);
       }
     }
+    
+    // Past users loading
+    try {
+      const stored = localStorage.getItem("sivali_past_users");
+      if (stored) {
+        setPastUsers(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     initUser();
     loadLeaderboard();
+
+    // PWA event listner
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const saveToPastUsers = (profile: UserProfile) => {
+    try {
+      const stored = localStorage.getItem("sivali_past_users");
+      const list: UserProfile[] = stored ? JSON.parse(stored) : [];
+      const filtered = list.filter(u => u.id !== profile.id);
+      filtered.unshift(profile);
+      localStorage.setItem("sivali_past_users", JSON.stringify(filtered.slice(0, 5)));
+      setPastUsers(filtered.slice(0, 5));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+        setShowInstallBanner(false);
+      }
+    } else {
+      alert("ဝဘ်ဆိုဒ်ကို ဖုန်း/ကွန်ပျူတာ Home Screen ပေါ်တွင် အိုင်ကွန်အဖြစ် ထည့်သွင်းရန် - \n\n၁။ Browser ဘေးရှိ Settings (စက်ဝိုင်းပုံ သုံးစက်) ကို နှိပ်ပါ။\n၂။ 'Add to Home screen' သို့မဟုတ် 'Install App' ကို ရွေးချယ်ပေးပါ။");
+    }
+  };
+
+  const handleLogoClick = () => {
+    const pw = prompt("Admin Dashboard သို့ ဝင်ရောက်ရန် Password ကို ထည့်သွင်းပါ -");
+    if (pw === "zawzaw123") {
+      setActiveScreen("admin");
+    } else if (pw !== null) {
+      alert("စကားဝှက် မှားယွင်းနေပါသည်။");
+    }
+  };
 
   // Fetch leaderboard rankings
   const loadLeaderboard = async () => {
@@ -103,6 +197,7 @@ export default function App() {
         if (newUser) {
           localStorage.setItem("sivali_library_userId", newUser.id);
           setUser(newUser);
+          saveToPastUsers(newUser);
           setActiveScreen("dashboard");
           // Refresh leaderboard to include new user
           loadLeaderboard();
@@ -122,6 +217,7 @@ export default function App() {
   const handleConfirmResume = (selectedUser: UserProfile) => {
     localStorage.setItem("sivali_library_userId", selectedUser.id);
     setUser(selectedUser);
+    saveToPastUsers(selectedUser);
     setActiveScreen("dashboard");
     setUserMatchFound(null);
     setUsernameInput("");
@@ -149,7 +245,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full relative overflow-x-hidden bg-gradient-to-b from-[#0e0720] via-[#160a2d] to-[#0a0414] font-sans text-slate-100 flex flex-col justify-between">
+    <div 
+      className="min-h-screen w-full relative overflow-x-hidden bg-gradient-to-b from-[#0e0720] via-[#160a2d] to-[#0a0414] font-sans text-slate-100 flex flex-col justify-between"
+      style={{ fontSize: `${fontScale}%` }}
+    >
       
       {/* 3D Liquid Animated Background Blobs */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -165,7 +264,14 @@ export default function App() {
         {/* Navigation Bar / App Brand */}
         <header className="w-full max-w-7xl mx-auto px-4 py-5 flex justify-between items-center border-b border-white/5 bg-white/[0.01] backdrop-blur-md">
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => user && setActiveScreen("dashboard")}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff007f] via-[#a855f7] to-[#06b6d4] flex items-center justify-center shadow-[0_0_15px_rgba(236,72,153,0.5)] border border-white/20">
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLogoClick();
+              }}
+              className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff007f] via-[#a855f7] to-[#06b6d4] flex items-center justify-center shadow-[0_0_15px_rgba(236,72,153,0.5)] border border-white/20 cursor-pointer"
+              title="Admin Dashboard"
+            >
               <BookOpen className="text-white w-5.5 h-5.5 animate-pulse" />
             </div>
             <div>
@@ -178,31 +284,153 @@ export default function App() {
             </div>
           </div>
 
-          {user && (
-            <div className="flex items-center gap-4">
-              <div 
-                onClick={() => setActiveScreen("dashboard")}
-                className="hidden sm:flex items-center gap-2 bg-pink-500/10 border border-pink-500/30 px-4 py-1.5 rounded-full text-xs font-semibold hover:bg-pink-500/20 cursor-pointer transition-all shadow-[0_0_15px_rgba(236,72,153,0.15)]"
-              >
-                <User className="w-3.5 h-3.5 text-pink-400" />
-                <span className="text-white max-w-[100px] truncate font-bold">{user.username}</span>
-                <span className="bg-gradient-to-r from-[#ff007f] to-[#a855f7] text-white px-2 py-0.5 rounded-full font-black text-[10px] tracking-wide shadow-md">
-                  {user.totalPoints} pts
-                </span>
+          <div className="flex items-center gap-2.5 sm:gap-4">
+            {/* Accessibility / Theme / Settings toggler */}
+            <button
+              onClick={() => setShowSettings(prev => !prev)}
+              className="p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+              title="အပြင်အဆင်နှင့် စာလုံးအရွယ်အစား ချိန်ညှိရန်"
+            >
+              <Settings className={`w-4 h-4 ${showSettings ? "animate-spin text-pink-400" : ""}`} />
+            </button>
+
+            {user && (
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div 
+                  onClick={() => setActiveScreen("dashboard")}
+                  className="hidden sm:flex items-center gap-2 bg-pink-500/10 border border-pink-500/30 px-4 py-1.5 rounded-full text-xs font-semibold hover:bg-pink-500/20 cursor-pointer transition-all shadow-[0_0_15px_rgba(236,72,153,0.15)]"
+                >
+                  <User className="w-3.5 h-3.5 text-pink-400" />
+                  <span className="text-white max-w-[100px] truncate font-bold">{user.username}</span>
+                  <span className="bg-gradient-to-r from-[#ff007f] to-[#a855f7] text-white px-2 py-0.5 rounded-full font-black text-[10px] tracking-wide shadow-md">
+                    {user.totalPoints} pts
+                  </span>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="p-2 rounded-xl border border-white/10 hover:bg-red-500/20 hover:border-red-500/30 text-slate-300 hover:text-red-400 transition-all cursor-pointer"
+                  title="အကောင့်ထွက်မည်"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
-              <button 
-                onClick={handleLogout}
-                className="p-2 rounded-xl border border-white/10 hover:bg-red-500/20 hover:border-red-500/30 text-slate-300 hover:text-red-400 transition-all cursor-pointer"
-                title="အကောင့်ထွက်မည်"
+            )}
+          </div>
+        </header>
+
+        {/* Floating Settings Drawer Panel */}
+        <AnimatePresence>
+          {showSettings && (
+            <div className="w-full max-w-7xl mx-auto px-4 relative z-50">
+              <motion.div 
+                initial={{ height: 0, opacity: 0, y: -10 }}
+                animate={{ height: "auto", opacity: 1, y: 0 }}
+                exit={{ height: 0, opacity: 0, y: -10 }}
+                className="w-full max-w-md ml-auto mt-2 bg-[#120a2a]/95 border border-white/10 p-5 rounded-3xl backdrop-blur-2xl shadow-2xl text-white relative"
               >
-                <LogOut className="w-4 h-4" />
-              </button>
+                <div className="absolute top-4 right-4">
+                  <button 
+                    onClick={() => setShowSettings(false)}
+                    className="text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <h3 className="text-sm font-extrabold text-white mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
+                  <Settings className="w-4 h-4 text-pink-400" />
+                  <span>Accessibility Settings (ချိန်ညှိမှုများ)</span>
+                </h3>
+                
+                {/* Theme selection */}
+                <div className="flex justify-between items-center mb-5">
+                  <span className="text-xs text-slate-300 font-bold">Theme (နောက်ခံအရောင်)</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setTheme("dark")}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                        theme === "dark" 
+                          ? "bg-purple-500/20 border-purple-400 text-purple-200"
+                          : "border-white/10 text-slate-400 hover:bg-white/5"
+                      }`}
+                    >
+                      Dark Mode
+                    </button>
+                    <button
+                      onClick={() => setTheme("light")}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                        theme === "light" 
+                          ? "bg-pink-500/20 border-pink-400 text-pink-700"
+                          : "border-white/10 text-slate-400 hover:bg-white/5"
+                      }`}
+                    >
+                      Light Mode
+                    </button>
+                  </div>
+                </div>
+
+                {/* Font Scale select */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs text-slate-300 font-bold">
+                    <span>စာလုံးအက္ခရာအရွယ်အစား (Font Scale)</span>
+                    <span className="text-pink-400 font-extrabold">{fontScale}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="100"
+                    max="160"
+                    step="10"
+                    value={fontScale}
+                    onChange={(e) => setFontScale(Number(e.target.value))}
+                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>Normal (ပုံမှန်)</span>
+                    <span>Medium (အလတ်)</span>
+                    <span>Large (အကြီး)</span>
+                    <span>Huge (အလွန်ကြီး)</span>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           )}
-        </header>
+        </AnimatePresence>
 
         {/* Content Route Controller */}
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 md:py-10 flex flex-col justify-center">
+          {/* PWA Banner Prompter */}
+          {showInstallBanner && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-3xl bg-[#1c0f3d]/80 border border-pink-500/30 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl backdrop-blur-md"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-pink-500/20 flex items-center justify-center text-pink-400 shrink-0">
+                  <Smartphone className="w-5 h-5 animate-bounce" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-extrabold text-white">Sīvali Library App ကို သင့်ဖုန်း/ကွန်ပျူတာပေါ်တွင် Install လုပ်ပါ</h4>
+                  <p className="text-xs text-slate-300">Home Screen ပေါ်တွင် အချိန်မရွေး လျင်မြန်စွာ လေ့ကျင့်ခန်းများ ဝင်ရောက်ဖြေဆိုနိုင်ရန် ထည့်သွင်းထားပါ</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handleInstallClick}
+                  className="px-4 py-2 bg-pink-500 hover:bg-pink-600 border border-pink-400 text-white font-bold text-xs rounded-2xl cursor-pointer transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(236,72,153,0.4)]"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                  <span>Install လုပ်မည်</span>
+                </button>
+                <button
+                  onClick={() => setShowInstallBanner(false)}
+                  className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold rounded-2xl cursor-pointer transition-all"
+                >
+                  ပိတ်မည်
+                </button>
+              </div>
+            </motion.div>
+          )}
+
           {loading ? (
             <div className="text-center py-20">
               <RefreshCw className="w-12 h-12 text-cyan-400 animate-spin mx-auto mb-4" />
@@ -292,7 +520,7 @@ export default function App() {
                         <div className="flex flex-col gap-3">
                           <button
                             onClick={() => handleConfirmResume(userMatchFound)}
-                            className="w-full py-3.5 rounded-2xl font-bold liquid-button text-sm"
+                            className="w-full py-3.5 rounded-2xl font-bold liquid-button text-sm cursor-pointer"
                           >
                             ဟုတ်ကဲ့၊ ကျွန်ုပ်အကောင့်ဖြစ်ပါသည် (ပြန်ဝင်မည်)
                           </button>
@@ -301,12 +529,34 @@ export default function App() {
                               setUserMatchFound(null);
                               setUsernameInput("");
                             }}
-                            className="w-full py-3 rounded-2xl border border-white/10 hover:bg-white/5 text-slate-300 text-xs transition-all"
+                            className="w-full py-3 rounded-2xl border border-white/10 hover:bg-white/5 text-slate-300 text-xs transition-all cursor-pointer"
                           >
                             အခြားအမည်သစ်တစ်ခု ရွေးချယ်မည်
                           </button>
                         </div>
                       </motion.div>
+                    )}
+
+                    {/* Saved Profiles (Previously Logged In Names on this device) */}
+                    {pastUsers.length > 0 && !userMatchFound && (
+                      <div className="mt-6 pt-6 border-t border-white/10 relative z-10">
+                        <label className="text-[10px] text-pink-300 font-bold block mb-3 uppercase tracking-wider text-center">
+                          ယခင်က ဝင်ရောက်ဖူးသော အကောင့်များ (Saved Profiles)
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {pastUsers.map((profile) => (
+                            <button
+                              key={profile.id}
+                              type="button"
+                              onClick={() => handleConfirmResume(profile)}
+                              className="text-left p-3 rounded-2xl bg-white/[0.03] hover:bg-pink-500/10 border border-white/5 hover:border-pink-500/30 text-white text-xs transition-all cursor-pointer flex flex-col justify-between group"
+                            >
+                              <span className="font-bold text-slate-200 group-hover:text-pink-300 block truncate">{profile.username}</span>
+                              <span className="text-slate-400 font-mono text-[10px] mt-1">{profile.totalPoints || 0} pts</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                     <div className="mt-8 pt-6 border-t border-white/5 text-center text-xs text-slate-500">
@@ -602,6 +852,15 @@ export default function App() {
                   onUpdateUser={setUser} 
                   onBack={() => {
                     setActiveScreen("dashboard");
+                    loadLeaderboard();
+                  }} 
+                />
+              )}
+
+              {activeScreen === "admin" && (
+                <AdminDashboard 
+                  onBack={() => {
+                    setActiveScreen(user ? "dashboard" : "login");
                     loadLeaderboard();
                   }} 
                 />

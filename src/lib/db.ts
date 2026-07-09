@@ -216,3 +216,119 @@ export async function getLeaderboard(limitCount: number = 50): Promise<UserProfi
   }
   return [];
 }
+
+// Get all users (for Admin Dashboard)
+export async function getAllUsers(): Promise<UserProfile[]> {
+  try {
+    const q = query(
+      collection(db, USERS_COLLECTION),
+      orderBy("username", "asc")
+    );
+    const querySnapshot = await getDocs(q);
+    const usersList: UserProfile[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      usersList.push({
+        id: data.id,
+        username: data.username,
+        totalPoints: data.totalPoints || 0,
+        ddcScore: data.ddcScore || 0,
+        catalogingScore: data.catalogingScore || 0,
+        filingScore: data.filingScore || 0,
+        subjectScore: data.subjectScore || 0,
+        gkScore: data.gkScore || 0,
+        lastActive: data.lastActive ? (data.lastActive.toDate ? data.lastActive.toDate().toISOString() : data.lastActive) : null
+      });
+    });
+    return usersList;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, USERS_COLLECTION);
+  }
+  return [];
+}
+
+// Delete user profile (for Admin Dashboard)
+export async function deleteUserProfile(userId: string): Promise<boolean> {
+  const path = `${USERS_COLLECTION}/${userId}`;
+  try {
+    const { deleteDoc } = await import("firebase/firestore");
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+  return false;
+}
+
+const CUSTOM_QUESTIONS_COLLECTION = "custom_questions";
+
+// Add custom question
+export async function addCustomQuestion(
+  gameType: string,
+  level: number,
+  questionData: any
+): Promise<boolean> {
+  const newId = "cq_" + Math.random().toString(36).substring(2, 15);
+  const path = `${CUSTOM_QUESTIONS_COLLECTION}/${newId}`;
+  try {
+    const docRef = doc(db, CUSTOM_QUESTIONS_COLLECTION, newId);
+    await setDoc(docRef, {
+      id: newId,
+      gameType,
+      level,
+      questionData: JSON.stringify(questionData),
+      createdAt: serverTimestamp()
+    });
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+  return false;
+}
+
+// Get custom questions
+export async function getCustomQuestions(gameType?: string): Promise<any[]> {
+  try {
+    let q = query(collection(db, CUSTOM_QUESTIONS_COLLECTION), orderBy("createdAt", "desc"));
+    if (gameType) {
+      q = query(
+        collection(db, CUSTOM_QUESTIONS_COLLECTION),
+        where("gameType", "==", gameType),
+        orderBy("createdAt", "desc")
+      );
+    }
+    const querySnapshot = await getDocs(q);
+    const questions: any[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      questions.push({
+        id: data.id,
+        gameType: data.gameType,
+        level: data.level,
+        questionData: JSON.parse(data.questionData),
+        createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : data.createdAt) : null
+      });
+    });
+    return questions;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, CUSTOM_QUESTIONS_COLLECTION);
+  }
+  return [];
+}
+
+// Delete custom question
+export async function deleteCustomQuestion(id: string): Promise<boolean> {
+  const path = `${CUSTOM_QUESTIONS_COLLECTION}/${id}`;
+  try {
+    const { deleteDoc } = await import("firebase/firestore");
+    const docRef = doc(db, CUSTOM_QUESTIONS_COLLECTION, id);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+  return false;
+}
+
+

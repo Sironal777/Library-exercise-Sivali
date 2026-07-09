@@ -36,6 +36,31 @@
           "description": "Last time the user played any game."
         }
       }
+    },
+    "custom_questions": {
+      "description": "Store admin-created or AI-generated custom questions that are merged into the game pools.",
+      "fields": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the question."
+        },
+        "gameType": {
+          "type": "string",
+          "description": "One of ddc, cataloging, filing, subject, gk."
+        },
+        "level": {
+          "type": "number",
+          "description": "Game level (1 or 2)."
+        },
+        "questionData": {
+          "type": "string",
+          "description": "Stringified JSON of the question record matching its game structure."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the custom question was added."
+        }
+      }
     }
   }
 }
