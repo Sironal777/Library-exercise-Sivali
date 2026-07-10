@@ -35,6 +35,7 @@ import FilingGame from "./components/FilingGame";
 import SubjectGame from "./components/SubjectGame";
 import GeneralKnowledgeGame from "./components/GeneralKnowledgeGame";
 import AdminDashboard from "./components/AdminDashboard";
+import MindMaps from "./components/MindMaps";
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>("login");
@@ -77,6 +78,7 @@ export default function App() {
   // Save Font Scale selection
   useEffect(() => {
     localStorage.setItem("sivali_fontScale", fontScale.toString());
+    document.documentElement.style.fontSize = `${fontScale}%`;
   }, [fontScale]);
 
   // Load user, past users and PWA prompt on mount
@@ -827,6 +829,29 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* Interactive Mind Maps */}
+                      <div className="glass-card p-6 rounded-3xl border border-white/15 flex flex-col justify-between hover:border-teal-500/50 hover:shadow-[0_0_20px_rgba(20,184,166,0.15)] transition-all group">
+                        <div>
+                          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4 text-teal-400 shadow-[0_0_10px_rgba(20,184,166,0.2)]">
+                            <Sparkles className="w-5 h-5 animate-pulse" />
+                          </div>
+                          <h4 className="text-base font-black text-white">Interactive Mind Maps (သင်ခန်းစာစိတ်မြေပုံများ)</h4>
+                          <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                            စာကြည့်တိုက်ပညာရပ်၏ အဓိကဘာသာရပ်ကြီး ၅ ခု (ADM, CAL, MCS, MSS, HIS) ကို လှပသပ်ရပ်ပြီး ပြည့်စုံစွာ ဆွဲပြထားသော မြန်မာဘာသာအပြန်အလှန် စိတ်မြေပုံများ
+                          </p>
+                        </div>
+                        <div className="mt-6 flex justify-between items-center">
+                          <span className="text-[10px] text-teal-300 font-bold bg-teal-500/10 px-2 py-0.5 rounded-full">ဘာသာရပ်ကြီး ၅ ခု</span>
+                          <button 
+                            onClick={() => setActiveScreen("game_mindmaps")}
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white flex items-center gap-1 group-hover:bg-teal-500/20 group-hover:border-teal-500 group-hover:text-teal-300 transition-all cursor-pointer"
+                          >
+                            <span>ကြည့်ရှုလေ့လာမည်</span>
+                            <Play className="w-3 h-3 fill-current" />
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
@@ -882,6 +907,16 @@ export default function App() {
                 <GeneralKnowledgeGame 
                   user={user} 
                   onUpdateUser={setUser} 
+                  onBack={() => {
+                    setActiveScreen("dashboard");
+                    loadLeaderboard();
+                  }} 
+                />
+              )}
+
+              {activeScreen === "game_mindmaps" && user && (
+                <MindMaps 
+                  user={user} 
                   onBack={() => {
                     setActiveScreen("dashboard");
                     loadLeaderboard();
