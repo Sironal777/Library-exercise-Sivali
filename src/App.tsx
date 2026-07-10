@@ -53,6 +53,9 @@ export default function App() {
   const [theme, setTheme] = useState<"dark" | "light">(
     () => (localStorage.getItem("sivali_theme") as "dark" | "light") || "dark"
   );
+  const [syncWithSystem, setSyncWithSystem] = useState<boolean>(
+    () => localStorage.getItem("sivali_sync_with_system") === "true"
+  );
   const [fontScale, setFontScale] = useState<number>(
     () => Number(localStorage.getItem("sivali_fontScale")) || 100
   );
@@ -74,6 +77,32 @@ export default function App() {
       document.documentElement.classList.remove("light");
     }
   }, [theme]);
+
+  // Synchronize theme with system preference if enabled
+  useEffect(() => {
+    localStorage.setItem("sivali_sync_with_system", syncWithSystem.toString());
+    if (!syncWithSystem) return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setTheme(e.matches ? "dark" : "light");
+    };
+
+    handleChange(mediaQuery);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, [syncWithSystem]);
+
+  const handleThemeChange = (newTheme: "dark" | "light") => {
+    setSyncWithSystem(false);
+    setTheme(newTheme);
+  };
 
   // Save Font Scale selection
   useEffect(() => {
@@ -376,11 +405,11 @@ export default function App() {
                 </h3>
                 
                 {/* Theme selection */}
-                <div className="flex justify-between items-center mb-5">
+                <div className="flex justify-between items-center mb-4">
                   <span className="text-xs text-slate-300 font-bold">Theme (နောက်ခံအရောင်)</span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setTheme("dark")}
+                      onClick={() => handleThemeChange("dark")}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                         theme === "dark" 
                           ? "bg-purple-500/20 border-purple-400 text-purple-200"
@@ -390,16 +419,36 @@ export default function App() {
                       Dark Mode
                     </button>
                     <button
-                      onClick={() => setTheme("light")}
+                      onClick={() => handleThemeChange("light")}
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                         theme === "light" 
-                          ? "bg-pink-500/20 border-pink-400 text-pink-700"
+                          ? "bg-pink-500/20 border-pink-400 text-pink-300"
                           : "border-white/10 text-slate-400 hover:bg-white/5"
                       }`}
                     >
                       Light Mode
                     </button>
                   </div>
+                </div>
+
+                {/* Sync with System Theme */}
+                <div className="flex justify-between items-center mb-5 border-t border-white/5 pt-4">
+                  <div className="pr-4">
+                    <span className="text-xs text-slate-300 font-bold block">Sync with Device (စနစ်နောက်ခံအတိုင်း)</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5 leading-relaxed">
+                      စက်ပစ္စည်း၏ စနစ်အလင်း/အမှောင် ရွေးချယ်မှုအတိုင်း အလိုအလျောက်ပြောင်းပေးမည်
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSyncWithSystem(prev => !prev)}
+                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 cursor-pointer shrink-0 ${
+                      syncWithSystem ? "bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]" : "bg-white/10"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white transition-all duration-300 transform ${
+                      syncWithSystem ? "translate-x-6" : "translate-x-0"
+                    }`} />
+                  </button>
                 </div>
 
                 {/* Font Scale select */}
