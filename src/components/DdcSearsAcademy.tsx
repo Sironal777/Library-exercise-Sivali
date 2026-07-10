@@ -1018,7 +1018,7 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
                               {code.example && (
                                 <div className="mt-3 pt-2.5 border-t border-slate-900/60">
                                   <span className="text-[9px] text-amber-300 font-bold block">လက်တွေ့ပေါင်းစပ်ပုံ:</span>
-                                  <code className="text-[10px] text-slate-300 font-mono block mt-1 bg-slate-900 p-1.5 rounded border border-slate-800">
+                                  <code className="text-xs text-slate-200 font-sans font-bold block mt-1 bg-slate-900 p-2 rounded-xl border border-slate-800 whitespace-pre-wrap">
                                     {code.example}
                                   </code>
                                 </div>
@@ -1171,7 +1171,7 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
 
                       <div className="pt-3 border-t border-slate-800">
                         <span className="text-[10px] text-slate-400 font-bold block">Example Formulation (လက်တွေ့အသုံးပြုပုံ နမူနာ)</span>
-                        <code className="text-xs font-mono text-amber-300 bg-slate-950 p-3 rounded-xl border border-slate-850 block mt-1.5">
+                        <code className="text-xs sm:text-sm font-sans font-extrabold text-amber-300 bg-slate-950 p-3 rounded-xl border border-slate-850 block mt-1.5 whitespace-pre-wrap">
                           {selectedSearsHeading.example}
                         </code>
                       </div>

@@ -484,32 +484,35 @@ export default function App() {
           {/* PWA Banner Prompter */}
           {showInstallBanner && (
             <motion.div 
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-3xl bg-[#1c0f3d]/80 border border-pink-500/30 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl backdrop-blur-md"
+              className="fixed bottom-4 right-4 z-50 max-w-sm p-3.5 rounded-2xl bg-slate-900/95 border border-pink-500/30 flex flex-col gap-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-md"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-pink-500/20 flex items-center justify-center text-pink-400 shrink-0">
-                  <Smartphone className="w-5 h-5 animate-bounce" />
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0">
+                  <Smartphone className="w-4 h-4" />
                 </div>
-                <div>
-                  <h4 className="text-sm font-extrabold text-white">Sīvali Library App ကို သင့်ဖုန်း/ကွန်ပျူတာပေါ်တွင် Install လုပ်ပါ</h4>
-                  <p className="text-xs text-slate-300">Home Screen ပေါ်တွင် အချိန်မရွေး လျင်မြန်စွာ လေ့ကျင့်ခန်းများ ဝင်ရောက်ဖြေဆိုနိုင်ရန် ထည့်သွင်းထားပါ</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-white leading-tight">Sīvali Library App ကို Install ပြုလုပ်မလား</h4>
+                  <p className="text-[10px] text-slate-300 mt-0.5 leading-relaxed">
+                    အချိန်မရွေး လျင်မြန်စွာ လေ့ကျင့်နိုင်ရန် သင့် Home Screen ပေါ်တွင် ထည့်သွင်းထားပါ။
+                  </p>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={handleInstallClick}
-                  className="px-4 py-2 bg-pink-500 hover:bg-pink-600 border border-pink-400 text-white font-bold text-xs rounded-2xl cursor-pointer transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(236,72,153,0.4)]"
-                >
-                  <ArrowDown className="w-3.5 h-3.5" />
-                  <span>Install လုပ်မည်</span>
-                </button>
                 <button
                   onClick={() => setShowInstallBanner(false)}
-                  className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold rounded-2xl cursor-pointer transition-all"
+                  className="text-slate-400 hover:text-white text-xs font-semibold p-1 cursor-pointer transition-all"
+                  title="ပိတ်မည်"
                 >
-                  ပိတ်မည်
+                  ✕
+                </button>
+              </div>
+              <div className="flex justify-end gap-1.5 pt-0.5">
+                <button
+                  onClick={handleInstallClick}
+                  className="px-3 py-1.5 bg-pink-500 hover:bg-pink-600 border border-pink-400 text-white font-bold text-[10px] rounded-xl cursor-pointer transition-all flex items-center gap-1 shadow-[0_0_10px_rgba(236,72,153,0.3)]"
+                >
+                  <ArrowDown className="w-3 h-3" />
+                  <span>Install လုပ်မည်</span>
                 </button>
               </div>
             </motion.div>

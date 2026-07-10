@@ -453,7 +453,7 @@ export default function SubjectGame({ user, onUpdateUser, onBack }: SubjectGameP
                     <h3 className="text-xl sm:text-2xl font-extrabold text-white text-glow-teal leading-relaxed">
                       {infiniteBook.title}
                     </h3>
-                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl text-slate-200 text-sm sm:text-base leading-relaxed font-mono">
+                    <div className="bg-white/5 border border-white/10 p-5 rounded-2xl text-slate-200 text-sm sm:text-base leading-relaxed font-sans font-medium">
                       {infiniteBook.description}
                     </div>
                   </div>
@@ -512,7 +512,7 @@ export default function SubjectGame({ user, onUpdateUser, onBack }: SubjectGameP
                           <span>အဖြေမှားယွင်းနေပါသည်။</span>
                         </div>
                       )}
-                      <p className="text-slate-300 leading-relaxed mt-2 font-mono">
+                      <p className="text-slate-300 leading-relaxed mt-2 font-sans text-sm sm:text-base">
                         <strong className="text-teal-300 block mb-1">ဆရာတော်၏ အမျိုးအစားခွဲခြားချက် ရှင်းလင်းချက် -</strong>
                         {infiniteBook.explanation}
                       </p>
@@ -599,7 +599,7 @@ export default function SubjectGame({ user, onUpdateUser, onBack }: SubjectGameP
                 placeholder="LCC ကုဒ် သို့မဟုတ် ရှာဖွေလိုသော ဘာသာရပ်ကို ရိုက်ထည့်ပါ... (e.g. BQ, Buddhism, Math, Myanmar, စိုက်ပျိုးရေး)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-none text-white text-sm focus:outline-none placeholder-slate-500 font-mono"
+                className="w-full bg-transparent border-none text-white text-sm focus:outline-none placeholder-slate-500 font-sans"
               />
               {searchQuery && (
                 <button 

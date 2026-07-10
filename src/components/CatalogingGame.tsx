@@ -856,7 +856,7 @@ export default function CatalogingGame({ user, onUpdateUser, onBack }: Catalogin
                 <label className="text-xs font-black text-pink-300 uppercase tracking-wider block">
                   VIRTUAL CATALOG CARD (၃ x ၅ လက်မ ကတ်ပြား ကတ်တလောက် ကွန်ပြူတာပုံရိပ်)
                 </label>
-                <div className="bg-[#FAF6EA] text-[#2c2415] border border-[#e4d9bc] rounded-3xl p-6 shadow-2xl relative font-mono text-[11px] leading-relaxed min-h-[250px] transition-all overflow-hidden flex flex-col justify-between">
+                <div className="bg-[#FAF6EA] text-[#111111] border border-[#e4d9bc] rounded-3xl p-6 shadow-2xl relative font-sans font-medium text-[12.5px] sm:text-[13.5px] leading-relaxed min-h-[250px] transition-all overflow-hidden flex flex-col justify-between">
                   {/* Card Red Top Horizontal Line */}
                   <div className="absolute top-[55px] left-0 right-0 h-[1px] bg-red-400/40" />
                   

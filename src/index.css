@@ -4,7 +4,7 @@
 @theme {
   --font-sans: "Outfit", "Inter", "Pyidaungsu", "Noto Sans Myanmar", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", "Pyidaungsu", "Noto Sans Myanmar", ui-monospace, SFMono-Regular, monospace;
 }
 
 /* Vibrant Palette - Ultra Glass & Radiant Neon Styles */
