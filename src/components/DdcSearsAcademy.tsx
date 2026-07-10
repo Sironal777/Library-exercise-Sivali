@@ -432,8 +432,11 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
         { code: "-01", meaning: "Philosophy & Theory", myanmarName: "ဒဿနိကဗေဒနှင့် သီအိုရီအယူဝါဒများ", example: "510.1 (Mathematics Theory = 510 + -01)" },
         { code: "-02", meaning: "Miscellany / Handbooks / Outlines", myanmarName: "အထွေထွေလက်စွဲ၊ အနှစ်ချုပ်နှင့် ပုံစံခွက်များ", example: "025.302 (Cataloging Handbook = 025.3 + -02)" },
         { code: "-03", meaning: "Dictionaries & Encyclopedias", myanmarName: "အဘိဓာန်များနှင့် စွယ်စုံကျမ်းများ", example: "610.3 (Medical Dictionary = 610 + -03)" },
+        { code: "-04", meaning: "Special topics of general applicability", myanmarName: "အထွေထွေ အထူးအကြောင်းအရာများ", example: "370.4 (Special Topics in Education = 370 + -04)" },
         { code: "-05", meaning: "Serial Publications (Journals, Periodicals)", myanmarName: "ဂျာနယ်၊ မဂ္ဂဇင်းနှင့် အချိန်မှန်ထုတ်ဝေသော စာစောင်များ", example: "505 (Pure Science Journal = 500 + -05)" },
+        { code: "-06", meaning: "Organizations & Management", myanmarName: "အဖွဲ့အစည်းများနှင့် စီမံခန့်ခွဲမှုဆိုင်ရာများ", example: "020.6 (Library Association = 020 + -06)" },
         { code: "-07", meaning: "Education, Research, Related Topics", myanmarName: "ပညာရေး၊ သုတေသနပြုမှုနှင့် သင်ကြားသင်ယူရေး", example: "630.7 (Agricultural Education = 630 + -07)" },
+        { code: "-08", meaning: "Groups of people / Collected works", myanmarName: "လူစုလူဝေးများနှင့် စုစည်းတင်ပြချက်များ", example: "300.8 (Social Sciences Collected Works = 300 + -08)" },
         { code: "-09", meaning: "Historical, Geographic, Persons Treatment", myanmarName: "သမိုင်းကြောင်း၊ ဒေသဆိုင်ရာ ဆက်စပ်တင်ပြမှု", example: "370.9 (History of Education = 370 + -09)" }
       ]
     },
@@ -443,13 +446,34 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
       myanmarName: "ဇယား ၂: ပထဝီဝင်ဒေသများနှင့် သမိုင်းဝင်ကာလများ (Geographic Areas)",
       description: "အကြောင်းအရာတစ်ခုကို တိကျသော ကမ္ဘာ့နိုင်ငံများ၊ တိုက်ကြီးများ သို့မဟုတ် မြို့ပြဒေသများနှင့် ဆက်စပ်ညွှန်းဆိုလိုသည့်အခါ ပေါင်းစပ်ရမည့် ဇယားဖြစ်သည်။",
       codes: [
+        { code: "-1", meaning: "Areas, Regions, Places in General", myanmarName: "အထွေထွေနေရာဒေသများနှင့် ကုန်းမြေ/ပင်လယ်ပြင်များ" },
+        { code: "-2", meaning: "Persons Treatment by Area", myanmarName: "ပထဝီဒေသအလိုက် လူပုဂ္ဂိုလ်ရေးဆိုင်ရာ ဆက်စပ်တင်ပြချက်" },
+        { code: "-3", meaning: "Ancient World", myanmarName: "ရှေးဟောင်းကမ္ဘာနှင့် ယဉ်ကျေးမှုထွန်းကားရာဒေသများ" },
         { code: "-4", meaning: "Europe", myanmarName: "ဥရောပတိုက်နှင့် နိုင်ငံများ" },
+        { code: "-41", meaning: "British Isles / Great Britain", myanmarName: "ဂရိတ်ဗြိတိန်နှင့် ဗြိတိသျှကျွန်းစုများ" },
+        { code: "-42", meaning: "England and Wales", myanmarName: "အင်္ဂလန်နှင့် ဝေလပြည်နယ်" },
+        { code: "-43", meaning: "Germany", myanmarName: "ဂျာမနီနိုင်ငံ" },
+        { code: "-44", meaning: "France", myanmarName: "ပြင်သစ်နိုင်ငံ" },
+        { code: "-47", meaning: "Russia", myanmarName: "ရုရှားနိုင်ငံ" },
         { code: "-5", meaning: "Asia", myanmarName: "အာရှတိုက်တစ်ခုလုံး" },
+        { code: "-51", meaning: "China", myanmarName: "တရုတ်ပြည်သူ့သမ္မတနိုင်ငံ" },
+        { code: "-52", meaning: "Japan", myanmarName: "ဂျပန်နိုင်ငံ" },
+        { code: "-54", meaning: "India & South Asia", myanmarName: "အိန္ဒိယနိုင်ငံနှင့် တောင်အာရှဒေသ" },
         { code: "-59", meaning: "Southeast Asia", myanmarName: "အရှေ့တောင်အာရှ ဒေသကြီး" },
         { code: "-591", meaning: "Myanmar", myanmarName: "မြန်မာနိုင်ငံ (စာကြည့်တိုက်တိုင်းအတွက် မရှိမဖြစ် ကုဒ်)", example: "370.9591 (Education in Myanmar = 370 + -09 + -591)" },
+        { code: "-593", meaning: "Thailand", myanmarName: "ထိုင်းနိုင်ငံ" },
+        { code: "-595", meaning: "Malaysia & Singapore", myanmarName: "မလေးရှားနှင့် စင်ကာပူနိုင်ငံ" },
+        { code: "-596", meaning: "Cambodia", myanmarName: "ကမ္ဘောဒီးယားနိုင်ငံ" },
+        { code: "-597", meaning: "Vietnam", myanmarName: "ဗီယက်နမ်နိုင်ငံ" },
+        { code: "-598", meaning: "Indonesia", myanmarName: "အင်ဒိုနီးရှားနိုင်ငံ" },
+        { code: "-599", meaning: "Philippines", myanmarName: "ဖိလစ်ပိုင်နိုင်ငံ" },
+        { code: "-6", meaning: "Africa", myanmarName: "အာဖရိကတိုက်" },
         { code: "-7", meaning: "North America", myanmarName: "မြောက်အမေရိကတိုက်" },
+        { code: "-71", meaning: "Canada", myanmarName: "ကနေဒါနိုင်ငံ" },
         { code: "-73", meaning: "United States", myanmarName: "အမေရိကန်ပြည်ထောင်စု" },
-        { code: "-9", meaning: "Other Regions (Pacific, Australia, etc.)", myanmarName: "အခြားသောဒေသများ (အိုရှန်းနီးယား၊ ပစိဖိတ်ဒေသ)" }
+        { code: "-8", meaning: "South America", myanmarName: "တောင်အမေရိကတိုက်" },
+        { code: "-9", meaning: "Other Regions (Pacific, Australia, etc.)", myanmarName: "အခြားသောဒေသများ (အိုရှန်းနီးယား၊ ပစိဖိတ်ဒေသ)" },
+        { code: "-94", meaning: "Australia", myanmarName: "ဩစတြေးလျနိုင်ငံ" }
       ]
     },
     {
@@ -461,7 +485,11 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
         { code: "-1", meaning: "Poetry", myanmarName: "ကဗျာလက်ရာများ", example: "821 (English Poetry = 820 + -1)" },
         { code: "-2", meaning: "Drama", myanmarName: "ပြဇာတ်လက်ရာများ", example: "822 (English Drama = 820 + -2)" },
         { code: "-3", meaning: "Fiction / Novels", myanmarName: "ဝတ္ထုရှည်၊ ဝတ္ထုတိုနှင့် ပုံပြင်များ", example: "823 (English Fiction = 820 + -3)" },
-        { code: "-8", meaning: "Miscellaneous Writings", myanmarName: "အထွေထွေစာစုစာကုံးနှင့် စာပေအစုံအလင်", example: "828 (English Miscellaneous)" }
+        { code: "-4", meaning: "Essays", myanmarName: "စာစီစာကုံးနှင့် စာစုတိုများ", example: "824 (English Essays = 820 + -4)" },
+        { code: "-5", meaning: "Speeches / Oratory", myanmarName: "မိန့်ခွန်းများနှင့် ဟောပြောချက်များ", example: "825 (English Speeches = 820 + -5)" },
+        { code: "-6", meaning: "Letters / Correspondence", myanmarName: "ပေးစာများနှင့် ပေးစာလွှာအနုပညာစုများ", example: "826 (English Letters = 820 + -6)" },
+        { code: "-7", meaning: "Humor & Satire", myanmarName: "ဟာသစာပေနှင့် သရော်စာများ", example: "827 (English Satire = 820 + -7)" },
+        { code: "-8", meaning: "Miscellaneous Writings", myanmarName: "အထွေထွေစာစုစာကုံးနှင့် စာပေအစုံအလင်", example: "828 (English Miscellaneous = 820 + -8)" }
       ]
     },
     {
@@ -471,8 +499,11 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
       description: "ဘာသာစကားသင်ကြားရေး (400 Class) တွင် သဒ္ဒါ၊ စကားလုံးပေါင်းစပ်ပုံ၊ အဘိဓာန်နှင့် အသံထွက်များကို ခွဲခြားရန် အသုံးပြုသည်။",
       codes: [
         { code: "-1", meaning: "Writing system, Phonology, Phonetics", myanmarName: "စာလုံးပေါင်းစနစ်၊ အသံထွက်ဗေဒနှင့် အက္ခရာစဉ်ပုံစံ", example: "421 (English Writing/Pronunciation = 420 + -1)" },
+        { code: "-2", meaning: "Etymology & Lexicography", myanmarName: "ဝေါဟာရဗေဒ၊ စကားလုံးဇစ်မြစ်နှင့် အဘိဓာန်ပြုစုပုံ", example: "422 (English Etymology = 420 + -2)" },
         { code: "-3", meaning: "Dictionaries of the standard language", myanmarName: "ဘာသာစကားအဘိဓာန်များ", example: "423 (English Dictionary = 420 + -3)" },
-        { code: "-5", meaning: "Grammar & Syntax", myanmarName: "သဒ္ဒါစနစ်နှင့် ဝါကျဖွဲ့ထုံးများ", example: "425 (English Grammar = 420 + -5)" }
+        { code: "-5", meaning: "Grammar & Syntax", myanmarName: "သဒ္ဒါစနစ်နှင့် ဝါကျဖွဲ့ထုံးများ", example: "425 (English Grammar = 420 + -5)" },
+        { code: "-7", meaning: "Historical and geographical variations", myanmarName: "ဘာသာစကား သမိုင်းကြောင်းနှင့် ဒေသန္တရကွဲပြားမှုများ", example: "427 (English Dialects = 420 + -7)" },
+        { code: "-8", meaning: "Standard usage / Applied linguistics", myanmarName: "ဘာသာစကား စံသုံးစွဲမှုနှင့် အသုံးချဘာသာစကား", example: "428 (Standard English Usage = 420 + -8)" }
       ]
     },
     {
@@ -481,9 +512,27 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
       myanmarName: "ဇယား ၅: တိုင်းရင်းသားလူမျိုးစုများနှင့် အမျိုးသားရေးအုပ်စုများ (Ethnic Groups)",
       description: "တိကျသော လူမျိုးစုများ၊ ကရင်၊ ကချင်၊ မွန်၊ ဗမာ သို့မဟုတ် ကမ္ဘာ့တိုင်းရင်းသား လူမျိုးစုများကို အခြေခံဘာသာရပ်တွင် ပေါင်းစပ်လိုလျှင် သုံးသည်။",
       codes: [
+        { code: "-1", meaning: "North Americans", myanmarName: "မြောက်အမေရိကတိုက်သားများ" },
+        { code: "-2", meaning: "Anglo-Saxons / British ancestry", myanmarName: "အင်္ဂလိပ်/အင်္ဂလိုဆက်ဆွန်လူမျိုးစုများနှင့် ဗြိတိသျှနွယ်ဖွားများ" },
+        { code: "-3", meaning: "Germanic peoples", myanmarName: "ဂျာမန်နစ်လူမျိုးစုများ" },
+        { code: "-4", meaning: "Modern Latins / French / Spanish", myanmarName: "ပြင်သစ်၊ စပိန်၊ အီတလီ လူမျိုးစုများ" },
+        { code: "-5", meaning: "Italians", myanmarName: "အီတလီလူမျိုးစုများ" },
+        { code: "-8", meaning: "Africans & Afro-Americans", myanmarName: "အာဖရိကန်နှင့် အာဖရိကန်-အမေရိကန်လူမျိုးစုများ" },
+        { code: "-912", meaning: "Sanskrit & Vedic peoples", myanmarName: "သက္ကတနှင့် ဝေဒလူမျိုးစုများ" },
         { code: "-914", meaning: "Indo-Aryans", myanmarName: "အင်ဒို-အာရီယန် လူမျိုးစုများ" },
+        { code: "-927", meaning: "Arabs & Semitic peoples", myanmarName: "အာရပ်နှင့် ဆမစ်တစ်လူမျိုးစုများ" },
         { code: "-95", meaning: "Sino-Tibetan and East Asian peoples", myanmarName: "တရုတ်-တိဗက်နှင့် အရှေ့အာရှနွယ်ဖွား လူမျိုးစုများ" },
-        { code: "-958", meaning: "Burmese / Myanmar ethnic groups", myanmarName: "မြန်မာတိုင်းရင်းသား လူမျိုးစုများ (ဗမာ၊ ရှမ်း၊ ကရင် စသည်)", example: "301.451958 (Sociology of Burmese people)" }
+        { code: "-951", meaning: "Chinese peoples", myanmarName: "တရုတ်လူမျိုးစုများ" },
+        { code: "-956", meaning: "Japanese peoples", myanmarName: "ဂျပန်လူမျိုးစုများ" },
+        { code: "-958", meaning: "Burmese / Myanmar ethnic groups", myanmarName: "မြန်မာတိုင်းရင်းသား လူမျိုးစုများ (အထွေထွေ)", example: "301.451958 (Sociology of Burmese people)" },
+        { code: "-9581", meaning: "Kachin (Jingpho)", myanmarName: "ကချင်တိုင်းရင်းသားလူမျိုးများ" },
+        { code: "-9582", meaning: "Kayah / Karenni", myanmarName: "ကယားတိုင်းရင်းသားလူမျိုးများ" },
+        { code: "-9583", meaning: "Karen (Kayin)", myanmarName: "ကရင်တိုင်းရင်းသားလူမျိုးများ" },
+        { code: "-9584", meaning: "Chin peoples", myanmarName: "ချင်းတိုင်းရင်းသားလူမျိုးများ" },
+        { code: "-9585", meaning: "Bamar (Burmans)", myanmarName: "ဗမာလူမျိုးစု" },
+        { code: "-9586", meaning: "Mon peoples", myanmarName: "မွန်တိုင်းရင်းသားလူမျိုးများ" },
+        { code: "-9587", meaning: "Rakhine peoples", myanmarName: "ရခိုင်တိုင်းရင်းသားလူမျိုးများ" },
+        { code: "-9588", meaning: "Shan peoples", myanmarName: "ရှမ်းတိုင်းရင်းသားလူမျိုးများ" }
       ]
     },
     {
@@ -492,9 +541,21 @@ export default function DdcSearsAcademy({ user, onBack }: DdcSearsAcademyProps) 
       myanmarName: "ဇယား ၆: ကမ္ဘာ့ဘာသာစကားများ (Languages)",
       description: "သမ္မာကျမ်းစာ ဘာသာပြန်ခြင်း၊ ဘာသာစကားအလိုက် စာအုပ်ညွှန်းပြသခြင်းတို့တွင် ဘာသာစကားကုဒ်များကို တိုက်ရိုက်သတ်မှတ်ရန် သုံးသည်။",
       codes: [
-        { code: "-11", meaning: "English language", myanmarName: "အင်္ဂလိပ်ဘာသာစကား" },
-        { code: "-95", meaning: "Asiatic languages", myanmarName: "အာရှဒေသ ဘာသာစကားများ" },
-        { code: "-958", meaning: "Burmese / Myanmar language", myanmarName: "မြန်မာဘာသာစကား (ဗမာစာ)" }
+        { code: "-1", meaning: "English & Anglo-Saxon", myanmarName: "အင်္ဂလိပ်ဘာသာစကား" },
+        { code: "-2", meaning: "German & Germanic languages", myanmarName: "ဂျာမန်နှင့် ဂျာမန်နစ်ဘာသာစကားများ" },
+        { code: "-3", meaning: "French language", myanmarName: "ပြင်သစ်ဘာသာစကား" },
+        { code: "-4", meaning: "Italian language", myanmarName: "အီတလီဘာသာစကား" },
+        { code: "-5", meaning: "Spanish language", myanmarName: "စပိန်ဘာသာစကား" },
+        { code: "-911", meaning: "Sanskrit", myanmarName: "သက္ကတဘာသာစကား" },
+        { code: "-913", meaning: "Pali", myanmarName: "ပါဠိဘာသာစကား (ဗုဒ္ဓကျမ်းစာတော်များအတွက် အရေးကြီးဆုံး)" },
+        { code: "-927", meaning: "Arabic", myanmarName: "အာရပ်ဘာသာစကား" },
+        { code: "-95", meaning: "Asiatic languages", myanmarName: "အာရှဒေသ ဘာသာစကားများ (အထွေထွေ)" },
+        { code: "-951", meaning: "Chinese language", myanmarName: "တရုတ်ဘာသာစကား" },
+        { code: "-956", meaning: "Japanese language", myanmarName: "ဂျပန်ဘာသာစကား" },
+        { code: "-958", meaning: "Burmese / Myanmar language", myanmarName: "မြန်မာဘာသာစကား (ဗမာစာ)" },
+        { code: "-9581", meaning: "Kachin language", myanmarName: "ကချင်ဘာသာစကား (ဂျင်းဖော)" },
+        { code: "-9583", meaning: "Karen languages", myanmarName: "ကရင်ဘာသာစကားများ" },
+        { code: "-9588", meaning: "Shan language", myanmarName: "ရှမ်းဘာသာစကား" }
       ]
     }
   ];
