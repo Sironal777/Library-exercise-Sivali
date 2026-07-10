@@ -36,6 +36,7 @@ import SubjectGame from "./components/SubjectGame";
 import GeneralKnowledgeGame from "./components/GeneralKnowledgeGame";
 import AdminDashboard from "./components/AdminDashboard";
 import MindMaps from "./components/MindMaps";
+import DdcSearsAcademy from "./components/DdcSearsAcademy";
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>("login");
@@ -901,6 +902,32 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* DDC & Sears List Academy */}
+                      <div className="glass-card p-6 rounded-3xl border border-white/15 flex flex-col justify-between hover:border-pink-400/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all group col-span-1 md:col-span-2">
+                        <div>
+                          <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center mb-4 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.2)] animate-pulse">
+                            <BookOpen className="w-5 h-5" />
+                          </div>
+                          <h4 className="text-base font-black text-white flex items-center gap-2">
+                            <span>DDC & Sears List Academy (စာကြည့်တိုက်ပညာဘဏ်တိုက်)</span>
+                            <span className="text-[9px] bg-pink-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">New</span>
+                          </h4>
+                          <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                            စာကြည့်တိုက်ကြီးတစ်ခု၏ ပညာဘဏ်တိုက်သဖွယ် DDC ၏ အဓိက အတန်းကြီး ၆ ခု၊ Tables (1-6) ဇယားကုဒ်များကို အဆင့်ဆင့်ပွား၍ လေ့လာနိုင်သော Interactive Code Builder နှင့် Sears List အခြေခံလေ့ကျင့်ခန်းများ
+                          </p>
+                        </div>
+                        <div className="mt-6 flex justify-between items-center">
+                          <span className="text-[10px] text-pink-300 font-bold bg-pink-500/10 px-2 py-0.5 rounded-full">Interactive Database & Exercises</span>
+                          <button 
+                            onClick={() => setActiveScreen("ddc_sears_academy")}
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white flex items-center gap-1 group-hover:bg-pink-500/25 group-hover:border-pink-500 group-hover:text-pink-300 transition-all cursor-pointer"
+                          >
+                            <span>လေ့လာလေ့ကျင့်မည်</span>
+                            <Play className="w-3 h-3 fill-current" />
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
@@ -965,6 +992,16 @@ export default function App() {
 
               {activeScreen === "game_mindmaps" && user && (
                 <MindMaps 
+                  user={user} 
+                  onBack={() => {
+                    setActiveScreen("dashboard");
+                    loadLeaderboard();
+                  }} 
+                />
+              )}
+
+              {activeScreen === "ddc_sears_academy" && user && (
+                <DdcSearsAcademy 
                   user={user} 
                   onBack={() => {
                     setActiveScreen("dashboard");

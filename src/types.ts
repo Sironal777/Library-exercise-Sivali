@@ -41,4 +41,4 @@ export interface CatalogQuizItem {
   }[];
 }
 
-export type ActiveScreen = "login" | "dashboard" | "game_ddc" | "game_catalog" | "game_filing" | "game_subject" | "game_gk" | "game_mindmaps" | "leaderboard" | "admin";
+export type ActiveScreen = "login" | "dashboard" | "game_ddc" | "game_catalog" | "game_filing" | "game_subject" | "game_gk" | "game_mindmaps" | "ddc_sears_academy" | "leaderboard" | "admin";
